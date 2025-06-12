@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace backend.Controllers
 {
-    [Route("[controller]")]
+    [Route("account")]
     public class AccountController : Controller
     {
         private readonly ILogger<AccountController> _logger;
@@ -29,18 +29,33 @@ namespace backend.Controllers
             _signInManager = signInManager;
         }
 
-        [HttpGet]
+        [HttpGet("register")]
         public IActionResult Register()
         {
             return View();
         }
 
-        [HttpPost]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] Register model)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                var firstError = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .FirstOrDefault()?.ErrorMessage;
+
+                return BadRequest(new { message = firstError ?? "Dados inválidos." });
+            }
+
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
+            if (existingUser != null)
+            {
+                return BadRequest(new { message = "Já existe um usuário com este email." });
+            }
+
+            if (model.Password != model.ConfirmPassword)
+            {
+                return BadRequest(new { message = "As senhas não conferem." });
             }
 
             var user = new IdentityUser { UserName = model.Email.Split("@")[0], Email = model.Email };
@@ -52,21 +67,19 @@ namespace backend.Controllers
                 return Ok();
             }
 
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error.Description);
-            }
-
-            return BadRequest(ModelState);
+            var firstIdentityError = result.Errors.FirstOrDefault()?.Description;
+            return BadRequest(new { message = firstIdentityError ?? "Erro ao registrar usuário." });
         }
 
-        [HttpGet]
+
+
+        [HttpGet("login")]
         public IActionResult Login()
         {
             return View();
         }
 
-        [HttpPost]
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] Login model)
         {
             if (!ModelState.IsValid)
