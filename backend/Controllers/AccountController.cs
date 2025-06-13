@@ -29,12 +29,6 @@ namespace backend.Controllers
             _signInManager = signInManager;
         }
 
-        [HttpGet("register")]
-        public IActionResult Register()
-        {
-            return View();
-        }
-
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] Register model)
         {
@@ -72,13 +66,6 @@ namespace backend.Controllers
         }
 
 
-
-        [HttpGet("login")]
-        public IActionResult Login()
-        {
-            return View();
-        }
-
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] Login model)
         {
@@ -87,7 +74,15 @@ namespace backend.Controllers
                 return BadRequest(ModelState);
             }
 
-            var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, isPersistent: false, lockoutOnFailure: false);
+            var user = await _userManager.FindByNameAsync(model.UserName);
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return BadRequest(ModelState);
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(user, model.Password, isPersistent: model.RememberMe, lockoutOnFailure: false);
+
 
             if (result.Succeeded)
             {
@@ -96,6 +91,13 @@ namespace backend.Controllers
 
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             return BadRequest(ModelState);
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await _signInManager.SignOutAsync();
+            return Ok(new { message = "Logout realizado com sucesso." });
         }
 
     }

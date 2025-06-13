@@ -79,5 +79,4 @@ npm run start
   "ConnectionStrings": {
     "AppDbConnectionString": "server=; database=GameView; user=; password=;"
   },
-  "RawgApiKey":""
 ```

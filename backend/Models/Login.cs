@@ -9,7 +9,6 @@ namespace backend.Models
     public class Login
     {
         [Required(ErrorMessage = "O e-mail é obrigatório.")]
-        [EmailAddress(ErrorMessage = "O e-mail informado não é válido.")]
         public string UserName { get; set; }
         [Required(ErrorMessage = "A senha é obrigatória.")]
         [DataType(DataType.Password)]

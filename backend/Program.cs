@@ -29,6 +29,16 @@ builder.Services.AddCors(options =>
         });
 });
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "SicrediAuth";
+    options.ExpireTimeSpan = TimeSpan.FromHours(1);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())

@@ -1,9 +1,25 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const Navbar: React.FC = () => {
-  const handleLogout = () => {
-    // Lógica para logout
-    console.log("Usuário deslogado");
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/account/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        // Redireciona para a página de login (raiz)
+        navigate("/", { replace: true });
+      } else {
+        console.error("Erro ao realizar logout.");
+      }
+    } catch (error) {
+      console.error("Erro ao conectar com o servidor:", error);
+    }
   };
 
   return (

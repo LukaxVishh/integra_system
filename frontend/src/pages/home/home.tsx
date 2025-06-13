@@ -9,9 +9,9 @@ const Home: React.FC = () => {
       <Navbar />
 
       {/* Conteúdo principal */}
-      <div className="flex-grow grid gap-2 p-4" style={{
+      <div className="flex-grow grid gap-2 p-15" style={{
         gridTemplateColumns: "repeat(5, 1fr)",
-        gridTemplateRows: "repeat(5, 1fr)",
+        gridTemplateRows: "repeat(4)",
       }}>
         {/* Lista de botões */}
         <div className="row-start-2 row-span-3 bg-white p-4 rounded-lg shadow-md">
