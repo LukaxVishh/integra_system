@@ -1,4 +1,5 @@
 using backend.Context;
+using backend.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,7 +40,19 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
+builder.Services.AddScoped<ISeedUserRoleInitial, SeedUserRoleInitial>();
+
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var seeder = services.GetRequiredService<ISeedUserRoleInitial>();
+    await seeder.SeedRolesAsync();
+    // await seeder.SeedUsersAsync();
+}
+
 
 if (app.Environment.IsDevelopment())
 {

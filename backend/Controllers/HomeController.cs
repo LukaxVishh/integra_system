@@ -15,6 +15,7 @@ namespace backend.Controllers
     public class HomeController : Controller
     {
 
+        [HttpGet]
         public IActionResult Get()
         {
             return Ok(new { message = "Você está autenticado!" });
