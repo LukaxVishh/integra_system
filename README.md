@@ -1,6 +1,6 @@
 # Integra System
 
-> Plataforma web para reviews de jogos, integrando dados da API externa RAWG.
+> Plataforma web para gerenciar serviços da cooperativa Sicredi Integração PR/SC.
 
 ## 🧾 Descrição
 
@@ -32,7 +32,7 @@ O **Integra System** é uma plataforma onde os colaboradores do Sicredi Integra�
 
 - [.NET SDK 8.0+](https://dotnet.microsoft.com/en-us/download)
 - Node.js 18+
-- MySQL instalado
+- Postgres instalado
 - Git instalado
 
 ### Passos
@@ -44,7 +44,7 @@ O **Integra System** é uma plataforma onde os colaboradores do Sicredi Integra�
 git clone git@github.com:LukaxVishh/integra_system.git
 
 # 2. Acesse a pasta do backend
-cd integra_system.API
+cd integra_system.backend
 
 # 3. Restaure os pacotes
 dotnet restore
@@ -60,7 +60,7 @@ dotnet run
 
 ```bash
 # 1. Acesse a pasta do frontend
-cd integra_system.front
+cd integra_system.frontend
 
 # 2. Instale as dependências
 npm install
@@ -77,6 +77,6 @@ npm run start
 
 ```
   "ConnectionStrings": {
-    "AppDbConnectionString": "server=; database=GameView; user=; password=;"
+    "DefaultConnection": "server=; database=IntegraSystem; user=; password=;"
   },
 ```

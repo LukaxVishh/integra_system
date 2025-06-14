@@ -5,10 +5,11 @@ import { useAuth } from "../../utils/AuthContext";
 
 const Navbar: React.FC = () => {
   const navigate = useNavigate();
-  const { roles, isLoading } = useAuth(); // Obter as roles e o estado de carregamento do contexto
+  const { roles, isLoading, setRoles, isLoggingOut, setIsLoggingOut } = useAuth(); // Usa o contexto global
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
       const response = await fetch("http://localhost:5000/account/logout", {
         method: "POST",
@@ -16,13 +17,18 @@ const Navbar: React.FC = () => {
       });
 
       if (response.ok) {
+        setTimeout(() => {
+          setRoles([]);
+          setIsLoggingOut(false);
+        }, 100);
         navigate("/", { replace: true });
+        return;
       } else {
         console.error("Erro ao realizar logout.");
       }
     } catch (error) {
       console.error("Erro ao conectar com o servidor:", error);
-    }
+    } 
   };
 
   const toggleDropdown = () => setIsOpen(!isOpen);
@@ -72,16 +78,17 @@ const Navbar: React.FC = () => {
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-red-100 text-red-600"
+                disabled={isLoggingOut}
               >
                 <LogOut className="w-4 h-4" />
-                Logout
+                {isLoggingOut ? "Saindo..." : "Logout"}
               </button>
             </div>
           )}
         </div>
       </div>
     </nav>
-  );
+  )
 };
 
 export default Navbar;

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ const Register: React.FC = () => {
   });
 
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -35,8 +37,8 @@ const Register: React.FC = () => {
         return;
       }
 
-      // Registro bem-sucedido
-      alert("Registro realizado com sucesso!");
+      // Registro bem-sucedido: redireciona para /first-access
+      navigate("/first-access");
     } catch (err) {
       setError("Erro ao conectar com o servidor.");
     }

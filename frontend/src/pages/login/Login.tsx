@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../utils/AuthContext"; // Importar o AuthContext
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ const Login: React.FC = () => {
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { resetLoading } = useAuth(); // Obter a função resetLoading do contexto
 
   // Mensagem passada pelo ProtectedRoute
   const state = location.state as { message?: string };
@@ -69,6 +71,7 @@ const Login: React.FC = () => {
       }
 
       // Login bem-sucedido
+      resetLoading(); // Redefinir o estado de carregamento e buscar as roles novamente
       navigate("/home");
     } catch (err) {
       setError("Erro ao conectar com o servidor.");
