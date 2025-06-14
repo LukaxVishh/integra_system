@@ -19,8 +19,8 @@ O **Integra System** é uma plataforma onde os colaboradores do Sicredi Integra�
 - **Linguagem Backend:** C# (.NET 8)
 - **Framework Backend:** ASP.NET Core
 - **ORM:** Entity Framework Core
-- **Frontend:** React.js
-- **Autenticação:** JWT (JSON Web Tokens)
+- **Frontend:** React.ts
+- **Autenticação:** Identity Framework Core
 - **Banco de Dados:** Postgres
 - **Versionamento:** Git + GitHub, GitLab
 
