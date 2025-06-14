@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Gerente CA")]
     [Route("users")]
     [ApiController]
     public class UserController : ControllerBase

@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace backend.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Gerente CA")]
     [Route("roles")]
     [ApiController]
     public class RoleController : Controller
@@ -25,6 +25,7 @@ namespace backend.Controllers
 
         // GET: /role
         [HttpGet]
+        [Authorize(Roles = "Admin, Gerente CA")]
         public async Task<IActionResult> GetRoles()
         {
             var roles = await Task.Run(() => _roleManager.Roles.Select(r => new { r.Id, r.Name }).ToList());
@@ -33,6 +34,7 @@ namespace backend.Controllers
 
         // POST: /role
         [HttpPost]
+        [Authorize(Roles = "Admin, Gerente CA")]
         public async Task<IActionResult> CreateRole([FromBody] RoleDto model)
         {
             if (string.IsNullOrWhiteSpace(model.Name))
@@ -50,6 +52,7 @@ namespace backend.Controllers
 
         // PUT: /role/{id}
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin, Gerente CA")]
         public async Task<IActionResult> UpdateRole(string id, [FromBody] RoleDto model)
         {
             var role = await _roleManager.FindByIdAsync(id);
@@ -69,6 +72,7 @@ namespace backend.Controllers
 
         // DELETE: /role/{id}
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteRole(string id)
         {
             var role = await _roleManager.FindByIdAsync(id);

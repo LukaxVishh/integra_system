@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace backend.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Gerente CA")]
     [ApiController]
     [Route("admin")]
     public class AdminController : Controller

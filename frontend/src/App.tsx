@@ -12,6 +12,7 @@ import FirstAccsses from "./pages/acessos/FirstAccess";
 
 const AppContent: React.FC = () => {
   const { isLoading } = useAuth();
+  const allowedRoles = ["Admin", "Gerente CA"];
 
   if (isLoading) {
     // Exibe uma tela de carregamento enquanto os dados estão sendo carregados
@@ -35,7 +36,7 @@ const AppContent: React.FC = () => {
         }
       />
       {/* Rotas protegidas por múltiplas roles */}
-      <Route element={<RoleProtectedRoute requiredRoles={["Admin"]} />}>
+      <Route element={<RoleProtectedRoute requiredRoles={allowedRoles} />}>
         <Route path="/admin/manager" element={<Manager />} />
         <Route path="/admin/manager/user/:id" element={<UserEdit />} />
       </Route>

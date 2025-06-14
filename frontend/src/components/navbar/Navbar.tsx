@@ -7,6 +7,7 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { roles, isLoading, setRoles, isLoggingOut, setIsLoggingOut } = useAuth(); // Usa o contexto global
   const [isOpen, setIsOpen] = useState(false);
+  const allowedRoles = ["Admin", "Gerente CA"];
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -66,7 +67,7 @@ const Navbar: React.FC = () => {
           {isOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded shadow-lg z-50">
               {/* Renderizar o botão "Gerenciador" apenas para usuários com a role "Admin" */}
-              {roles.includes("Admin") && (
+              {allowedRoles.some(role => roles.includes(role)) && (
                 <button
                   onClick={handleGerenciador}
                   className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100"
