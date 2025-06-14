@@ -49,7 +49,7 @@ using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var seeder = services.GetRequiredService<ISeedUserRoleInitial>();
-    await seeder.SeedRolesAsync();
+    // await seeder.SeedRolesAsync();
     // await seeder.SeedUsersAsync();
 }
 

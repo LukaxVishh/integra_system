@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/navbar/Navbar";
 import Footer from "../../components/footer/Footer";
@@ -30,6 +30,26 @@ const UserEdit: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [rolesDropdownOpen, setRolesDropdownOpen] = useState(false);
+  const [message, setMessage] = useState<string | null>(null); // Mensagem de feedback
+
+  const rolesDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fecha o dropdown ao clicar fora dele
+  useEffect(() => {
+    if (!rolesDropdownOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        rolesDropdownRef.current &&
+        !rolesDropdownRef.current.contains(event.target as Node)
+      ) {
+        setRolesDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [rolesDropdownOpen]);
 
   useEffect(() => {
     if (!id) return;
@@ -69,11 +89,11 @@ const UserEdit: React.FC = () => {
     const selectedRoles = roles.filter((r) => r.assigned).map((r) => r.name);
 
     const payload = {
-      Nome: nome,
-      Email: email,
-      Cargo: cargo,
-      UA: ua,
-      Roles: selectedRoles,
+      nome,
+      email,
+      cargo,
+      ua,
+      roles: selectedRoles,
     };
 
     try {
@@ -86,12 +106,18 @@ const UserEdit: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Erro ao salvar alterações");
-
-      alert("Alterações salvas com sucesso!");
-      navigate("/admin/manager");
+      if (response.ok) {
+        setMessage("Alterações salvas com sucesso!");
+        setTimeout(() => setMessage(null), 4000);
+        setTimeout(() => navigate("/admin/manager"), 2000);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        setMessage(errorData.message || "Erro ao salvar alterações.");
+        setTimeout(() => setMessage(null), 4000);
+      }
     } catch (error) {
-      alert("Erro ao salvar alterações.");
+      setMessage("Erro ao salvar alterações.");
+      setTimeout(() => setMessage(null), 4000);
       console.error(error);
     }
   };
@@ -105,12 +131,22 @@ const UserEdit: React.FC = () => {
 
       {/* Conteúdo principal */}
       <div className="flex-grow flex items-center justify-center p-6 mt-16">
-        <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-4xl">
+        <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-4xl relative">
           <h2 className="text-2xl font-bold text-gray-800 mb-6">Editar Usuário</h2>
-
           <div className="grid grid-cols-3 gap-4">
+            {/* Mensagem de feedback */}
+            {message && (
+              <div className="absolute left-1/2 -top-20 transform -translate-x-1/2">
+                <button
+                  className="border-1 border-green-700 bg-green-100 text-green-700 font-bold px-6 py-2 rounded shadow"
+                  disabled
+                >
+                  {message}
+                </button>
+              </div>
+            )}
             <div>
-              <label className="block font-semibold text-gray-700">UserName</label>
+              <label className="block font-semibold text-gray-700">Ldap</label>
               <input
                 type="text"
                 value={userName}
@@ -161,31 +197,33 @@ const UserEdit: React.FC = () => {
 
             <div>
               <label className="block font-semibold text-gray-700">Acessos</label>
-              <button
-                type="button"
-                onClick={() => setRolesDropdownOpen(!rolesDropdownOpen)}
-                className="w-full border border-gray-300 rounded p-2 text-left bg-gray-50 hover:bg-gray-100"
-              >
-                Selecionar Acessos
-              </button>
+              <div ref={rolesDropdownRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setRolesDropdownOpen(!rolesDropdownOpen)}
+                  className="w-full border border-gray-300 rounded p-2 text-left bg-gray-50 hover:bg-gray-100"
+                >
+                  Selecionar Acessos
+                </button>
 
-              {rolesDropdownOpen && (
-                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow max-h-48 overflow-auto">
-                  {roles.map((role) => (
-                    <label
-                      key={role.name}
-                      className="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={role.assigned}
-                        onChange={() => handleRoleChange(role.name)}
-                      />
-                      <span>{role.name}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
+                {rolesDropdownOpen && (
+                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow max-h-48 overflow-auto">
+                    {roles.map((role) => (
+                      <label
+                        key={role.name}
+                        className="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={role.assigned}
+                          onChange={() => handleRoleChange(role.name)}
+                        />
+                        <span>{role.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
