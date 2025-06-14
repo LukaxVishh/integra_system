@@ -1,11 +1,15 @@
 using backend.Context;
+using backend.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllers();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var conectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -14,26 +18,57 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowReactApp",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:3000") // Substitua pela URL do frontend
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                    .AllowCredentials();
+        });
+});
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "SicrediAuth";
+    options.ExpireTimeSpan = TimeSpan.FromHours(1);
+    options.SlidingExpiration = true;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
+builder.Services.AddScoped<ISeedUserRoleInitial, SeedUserRoleInitial>();
+
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    var services = scope.ServiceProvider;
+    var seeder = services.GetRequiredService<ISeedUserRoleInitial>();
+    await seeder.SeedRolesAsync();
+    // await seeder.SeedUsersAsync();
 }
 
-app.UseHttpsRedirection();
-app.UseStaticFiles();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Minha API v1");
+        c.RoutePrefix = string.Empty; // Deixa o Swagger acessível na raiz (http://localhost:5000/)
+    });
+}
+
+app.UseCors("AllowReactApp");
+// app.UseHttpsRedirection();
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapControllers();
 
 app.Run();
