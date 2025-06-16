@@ -32,6 +32,7 @@ using (var scope = app.Services.CreateScope())
 // Middleware
 app.UseSwaggerDocumentation(app.Environment);
 app.UseCors("AllowReactApp");
+app.AddStaticFiles();
 // app.UseHttpsRedirection(); // descomente se usar HTTPS
 app.UseRouting();
 app.UseAuthentication();
