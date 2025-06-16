@@ -1,18 +1,22 @@
+// utils/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface AuthContextProps {
   roles: string[];
   setRoles: React.Dispatch<React.SetStateAction<string[]>>;
+  currentUser: string | null;
+  setCurrentUser: React.Dispatch<React.SetStateAction<string | null>>;
   isLoading: boolean;
   resetLoading: () => void;
-  isLoggingOut: boolean; // NOVO
-  setIsLoggingOut: React.Dispatch<React.SetStateAction<boolean>>; // NOVO
+  isLoggingOut: boolean;
+  setIsLoggingOut: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [roles, setRoles] = useState<string[]>([]);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -25,8 +29,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Roles carregadas:", data.roles); // Log para depuração
+        console.log("Roles carregadas:", data.roles);
         setRoles(data.roles || []);
+
+        // 👉 Se sua API devolver o nome do usuário:
+        if (data.userName) {
+          setCurrentUser(data.userName);
+        }
       } else {
         console.error("Erro ao buscar roles do usuário.");
       }
@@ -34,7 +43,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Erro ao conectar com o servidor:", error);
     } finally {
       setIsLoading(false);
-      console.log("Carregamento concluído"); // Log para depuração
     }
   };
 
@@ -48,7 +56,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ roles, setRoles, isLoading, resetLoading, isLoggingOut, setIsLoggingOut }}>
+    <AuthContext.Provider
+      value={{
+        roles,
+        setRoles,
+        currentUser,
+        setCurrentUser,
+        isLoading,
+        resetLoading,
+        isLoggingOut,
+        setIsLoggingOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

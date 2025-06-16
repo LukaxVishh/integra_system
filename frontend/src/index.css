@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+.ProseMirror {
+  outline: none !important;
+  border: none !important;
+}
+
+.custom-prosemirror hr {
+  display: none;
+}

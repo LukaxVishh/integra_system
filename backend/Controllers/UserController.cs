@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Gerente CA")]
     [Route("users")]
     [ApiController]
     public class UserController : ControllerBase
@@ -28,15 +28,27 @@ namespace backend.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetUsers([FromQuery] int page = 1, [FromQuery] int limit = 20)
+        public async Task<IActionResult> GetUsers(
+            [FromQuery] int page = 1,
+            [FromQuery] int limit = 20,
+            [FromQuery] string userName = null
+        )
         {
-            var users = await _userManager.Users
+            var query = _userManager.Users.AsQueryable();
+
+            // Filtro por UserName se informado
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                query = query.Where(u => u.UserName.Contains(userName));
+            }
+
+            var totalUsers = await query.CountAsync();
+
+            var users = await query
                 .Skip((page - 1) * limit)
                 .Take(limit)
                 .Select(u => new { u.Id, u.UserName, u.Email })
                 .ToListAsync();
-
-            var totalUsers = await _userManager.Users.CountAsync();
 
             return Ok(new
             {

@@ -1,90 +1,98 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../../components/navbar/Navbar";
 import Footer from "../../components/footer/Footer";
+import Sidebar from "../../components/sidebar/Sidebar";
+import CreatePost from "../../components/post/CreatePost";
+import Post from "../../components/post/Post";
+import { useAuth } from "../../utils/AuthContext";
 
 const Home: React.FC = () => {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const { currentUser } = useAuth();
+
+  const pageSize = 20;
+
+  const fetchPosts = async (currentPage: number) => {
+    try {
+      const response = await fetch(`http://localhost:5000/posts?page=${currentPage}&pageSize=${pageSize}`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPosts(data.posts || []);
+        // Se vier menos que pageSize, significa que não tem mais:
+        setHasMore((data.posts || []).length === pageSize);
+      } else {
+        console.error("Erro ao buscar posts");
+      }
+    } catch (error) {
+      console.error("Erro ao conectar:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts(page);
+  }, [page]);
+
+  const handlePrevious = () => {
+    if (page > 1) setPage((prev) => prev - 1);
+  };
+
+  const handleNext = () => {
+    if (hasMore) setPage((prev) => prev + 1);
+  };
+
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
-      {/* Navbar */}
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <Navbar />
 
-      {/* Conteúdo principal */}
-      <div className="flex-grow grid gap-2 p-15" style={{
-        gridTemplateColumns: "repeat(5, 1fr)",
-        gridTemplateRows: "repeat(4)",
-      }}>
-        {/* Lista de botões */}
-        <div className="row-start-2 row-span-3 bg-white p-4 rounded-lg shadow-md">
-          <h2 className="text-lg font-bold mb-4">Menu</h2>
-          <ul className="space-y-2">
-            <li>
-              <button
-                className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                onClick={() => console.log("Página 1")}
-              >
-                Ciclo de Crédito
-              </button>
-            </li>
-            <li>
-              <button
-                className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                onClick={() => console.log("Página 2")}
-              >
-                Negócios
-              </button>
-            </li>
-            <li>
-              <button
-                className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                onClick={() => console.log("Página 3")}
-              >
-                Processos de Qualidade
-              </button>
-            </li>
-          </ul>
-        </div>
+      <main className="flex flex-1 p-4 gap-4 pt-20">
+        <Sidebar />
+        <section className="flex-1 bg-white rounded-2xl shadow p-4">
+          <h2 className="text-2xl font-bold mb-4">Feed de Notícias</h2>
 
-        {/* Feed de notícias */}
-        <div className="col-span-4 row-start-2 row-span-3 bg-white p-4 rounded-lg shadow-md overflow-y-auto">
-          <h2 className="text-lg font-bold mb-4">Feed de Notícias</h2>
-          {/* Campo de postagem */}
-          <div className="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
-            <textarea
-              placeholder="Escreva algo..."
-              className="w-full p-2 mb-2 border rounded resize-none"
-              rows={3}
-            />
-            <div className="flex items-center justify-between">
-              <div className="space-x-2">
-                <button className="text-blue-600 hover:underline">📷 Imagem</button>
-                <button className="text-green-600 hover:underline">🎥 Vídeo</button>
-                <button className="text-yellow-600 hover:underline">😊 Emote</button>
-              </div>
-              <button className="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">
-                Publicar
-              </button>
-            </div>
+          <CreatePost />
+
+          <div className="space-y-4 mt-6">
+            {posts.map((post) => (
+              <Post
+                key={post.id}
+                id={post.id}
+                author={post.author}
+                content={post.content}
+                mediaPath={post.mediaPath}
+                reactions={post.reactions}
+                comments={post.comments}
+                currentUser={currentUser}
+              />
+            ))}
           </div>
 
-          {/* Notícias simuladas */}
-          <div className="space-y-4">
-            <div className="p-4 bg-gray-200 rounded-md">
-              <h3 className="font-bold">Notícia 1</h3>
-              <p>Descrição da notícia 1...</p>
-            </div>
-            <div className="p-4 bg-gray-200 rounded-md">
-              <h3 className="font-bold">Notícia 2</h3>
-              <p>Descrição da notícia 2...</p>
-            </div>
-            <div className="p-4 bg-gray-200 rounded-md">
-              <h3 className="font-bold">Notícia 3</h3>
-              <p>Descrição da notícia 3...</p>
-            </div>
-          </div>
-        </div>
-      </div>
+          {/* 🔵 Botões de Paginação */}
+          <div className="flex justify-between mt-8">
+            <button
+              onClick={handlePrevious}
+              disabled={page === 1}
+              className={`px-4 py-2 rounded ${page === 1 ? "bg-gray-300 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+            >
+              Página Anterior
+            </button>
 
-      {/* Footer */}
+            <button
+              onClick={handleNext}
+              disabled={!hasMore}
+              className={`px-4 py-2 rounded ${!hasMore ? "bg-gray-300 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"}`}
+            >
+              Próxima Página
+            </button>
+          </div>
+        </section>
+      </main>
+
       <Footer />
     </div>
   );
