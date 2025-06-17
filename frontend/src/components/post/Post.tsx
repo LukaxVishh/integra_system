@@ -10,7 +10,8 @@ interface PostProps {
   mediaPath?: string | null;
   reactions: { type: string; count: number; users?: string[] }[];
   comments: { userName: string; text: string; createdAt: string }[];
-  onDelete?: (id: number) => void; // ✅ Novo: callback para pai remover
+  authorSupervisorId?: string | null;
+  onDelete?: (id: number) => void;
 }
 
 const Post: React.FC<PostProps> = ({
@@ -21,6 +22,7 @@ const Post: React.FC<PostProps> = ({
   mediaPath,
   reactions,
   comments: initialComments,
+  authorSupervisorId,
   onDelete,
 }) => {
   const { currentUser, roles } = useAuth();
@@ -30,18 +32,16 @@ const Post: React.FC<PostProps> = ({
   const [popupType, setPopupType] = useState<string | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
-  // Novo: Dropdown para editar/excluir
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Edição
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
   const [savingEdit, setSavingEdit] = useState(false);
 
   const isOwner = currentUser && currentUser.nome === authorName;
-  const isManager = roles.includes("Gerente CA") || roles.includes("Gerente UA");
   const isAdmin = roles.includes("Admin");
+  const isSupervisor = currentUser && authorSupervisorId && currentUser.id === authorSupervisorId;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -78,7 +78,7 @@ const Post: React.FC<PostProps> = ({
       if (response.ok) {
         const newPost = await fetch(`http://localhost:5000/posts/${id}`, {
           credentials: "include",
-        }).then(res => res.json());
+        }).then((res) => res.json());
 
         setLocalReactions(newPost.reactions);
       }
@@ -109,7 +109,6 @@ const Post: React.FC<PostProps> = ({
     }
   };
 
-  // ✅ EDITAR
   const handleEdit = () => {
     setEditedContent(content);
     setIsEditing(true);
@@ -137,7 +136,6 @@ const Post: React.FC<PostProps> = ({
     }
   };
 
-  // ✅ EXCLUIR
   const handleDelete = async () => {
     setMenuOpen(false);
     if (!window.confirm("Tem certeza que deseja excluir este post?")) return;
@@ -158,7 +156,6 @@ const Post: React.FC<PostProps> = ({
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-5 space-y-4 relative max-w-2xl mx-auto">
-      {/* Cabeçalho */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
           {authorName[0].toUpperCase()}
@@ -171,7 +168,7 @@ const Post: React.FC<PostProps> = ({
           <p className="text-xs text-gray-500">Agora mesmo</p>
         </div>
 
-        {(isOwner || isManager || isAdmin) && (
+        {(isOwner || isSupervisor || isAdmin) && (
           <div className="relative ml-auto" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
@@ -212,7 +209,6 @@ const Post: React.FC<PostProps> = ({
         )}
       </div>
 
-      {/* Texto ou edição */}
       {isEditing ? (
         <div className="space-y-2">
           <textarea
@@ -244,7 +240,6 @@ const Post: React.FC<PostProps> = ({
         />
       )}
 
-      {/* Mídia */}
       {mediaPath && mediaType && (
         <div className="w-full flex justify-start overflow-hidden rounded-lg">
           {mediaType === "image" && (
@@ -267,7 +262,6 @@ const Post: React.FC<PostProps> = ({
         </div>
       )}
 
-      {/* Reações */}
       <div className="flex gap-6 items-center text-gray-600 relative">
         {["like", "love", "laugh"].map((type) => (
           <button
@@ -316,7 +310,6 @@ const Post: React.FC<PostProps> = ({
         ))}
       </div>
 
-      {/* Novo comentário */}
       <div className="space-y-2">
         <input
           type="text"
@@ -333,7 +326,6 @@ const Post: React.FC<PostProps> = ({
         </button>
       </div>
 
-      {/* Lista de comentários */}
       {comments.length > 0 && (
         <div className="border-t border-gray-200 pt-3 space-y-3">
           <h4 className="text-sm font-semibold text-gray-700">Comentários</h4>
@@ -343,7 +335,8 @@ const Post: React.FC<PostProps> = ({
                 {c.userName[0].toUpperCase()}
               </div>
               <div className="text-sm bg-gray-100 rounded-xl px-4 py-2">
-                <span className="font-semibold">{getFirstAndSecondName(c.userName)}:</span> {c.text}
+                <span className="font-semibold">{getFirstAndSecondName(c.userName)}:</span>{" "}
+                {c.text}
               </div>
             </div>
           ))}

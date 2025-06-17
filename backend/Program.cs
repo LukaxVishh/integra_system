@@ -3,6 +3,7 @@ using backend.Services;
 using Microsoft.AspNetCore.Identity;
 using backend.Configurations;
 using Microsoft.AspNetCore.Authorization;
+using backend.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +21,8 @@ builder.Services.AddCookieConfiguration();
 // Injeção de dependências personalizadas
 builder.Services.AddScoped<ISeedUserRoleInitial, SeedUserRoleInitial>();
 builder.Services.AddSingleton<IAuthorizationPolicyProvider, DynamicAuthorizationPolicyProvider>();
+builder.Services.AddSingleton<IAuthorizationHandler, CanManagePostsHandler>();
+
 
 var app = builder.Build();
 

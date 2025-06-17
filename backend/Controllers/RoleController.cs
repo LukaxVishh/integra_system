@@ -32,9 +32,9 @@ namespace backend.Controllers
         {
             return roleName switch
             {
-                "Admin" => new List<string> { "CanManageAll" },
-                "Gerente CA" => new List<string> { "CanViewCA", "CanManageSubordinatesPosts" },
-                "Gerente UA" => new List<string> { "CanViewUA", "CanManageSubordinatesPosts" },
+                "Admin" => new List<string> { "CanManageAll", "CanManageOwnPosts" },
+                "Gerente CA" => new List<string> { "CanViewCA", "CanManageSubordinatesPosts", "CanManageOwnPosts" },
+                "Gerente UA" => new List<string> { "CanViewUA", "CanManageSubordinatesPosts", "CanManageOwnPosts" },
                 "Analista CA" => new List<string> { "CanViewCA", "CanManageOwnPosts" },
                 "Analista UA" => new List<string> { "CanViewUA", "CanManageOwnPosts" },
                 "Assistente CA" => new List<string> { "CanViewCA", "CanManageOwnPosts" },

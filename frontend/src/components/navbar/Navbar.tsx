@@ -8,7 +8,7 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const { roles, isLoading, setRoles, isLoggingOut, setIsLoggingOut, currentUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const allowedRoles = ["Admin", "Gerente CA"];
+  const allowedRoles = ["Admin"];
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 

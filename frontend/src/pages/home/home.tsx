@@ -68,6 +68,7 @@ const Home: React.FC = () => {
                 mediaPath={post.mediaPath}
                 reactions={post.reactions}
                 comments={post.comments}
+                authorSupervisorId={post.authorSupervisorId}
               />
             ))}
           </div>

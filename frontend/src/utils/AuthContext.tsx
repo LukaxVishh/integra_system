@@ -13,7 +13,7 @@ interface UserInfo {
 interface AuthContextProps {
   roles: string[];
   setRoles: React.Dispatch<React.SetStateAction<string[]>>;
-  currentUser: UserInfo | null;  // ✅ objeto completo com claims
+  currentUser: UserInfo | null;
   setCurrentUser: React.Dispatch<React.SetStateAction<UserInfo | null>>;
   isLoading: boolean;
   resetLoading: () => void;

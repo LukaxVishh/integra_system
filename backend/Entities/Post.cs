@@ -10,6 +10,7 @@ namespace backend.Entities
     {
         [Key]
         public int Id { get; set; }
+        public string AuthorId { get; set; }
 
         public string AuthorName { get; set; } = string.Empty;
         public string AuthorCargo { get; set; } = string.Empty;

@@ -60,7 +60,7 @@ namespace backend.Controllers
         {
             return roleName switch
             {
-                "Admin" => new List<System.Security.Claims.Claim> { new("CanManageAll", "true") },
+                "Admin" => new List<System.Security.Claims.Claim> { new("CanManageAll", "true"), new("CanManageOwnPosts", "true") },
                 "Gerente CA" => new List<System.Security.Claims.Claim>
                 {
                     new("CanViewCA", "true"),
@@ -284,6 +284,7 @@ namespace backend.Controllers
                 return NotFound("Colaborador não encontrado para o usuário autenticado.");
 
             var claims = await _userManager.GetClaimsAsync(user);
+            var roles = await _userManager.GetRolesAsync(user);
 
             return Ok(new
             {
@@ -293,7 +294,8 @@ namespace backend.Controllers
                 nome = colaborador.Nome,
                 cargo = colaborador.Cargo,
                 ua = colaborador.UA,
-                claims = claims.Select(c => c.Type).ToList()
+                claims = claims.Select(c => c.Type).ToList(),
+                roles,
             });
         }
 

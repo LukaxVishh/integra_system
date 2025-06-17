@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using backend.Authorization;
 using backend.Context;
 using Microsoft.AspNetCore.Identity;
 
@@ -91,6 +92,11 @@ public static class AuthorizationConfig
             options.AddPolicy("CanManageAll", policy =>
             {
                 policy.RequireRole("Admin");
+            });
+
+            options.AddPolicy("CanManagePosts", policy =>
+            {
+                policy.Requirements.Add(new CanManagePostsRequirement());
             });
         });
     }

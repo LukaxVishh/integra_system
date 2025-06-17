@@ -14,8 +14,9 @@ using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 
 namespace backend.Controllers
+
 {
-    [Authorize] // ⚙️ Padrão: exige auth
+    [Authorize]
     [Route("posts")]
     [ApiController]
     public class PostsController : Controller
@@ -31,12 +32,18 @@ namespace backend.Controllers
             _userManager = userManager;
         }
 
-        // ✅ Cria post — requer permissão para criar
+        // Cria post — requer permissão para criar
         [HttpPost]
-        [Authorize(Policy = "CanManageOwnPosts")]
         public async Task<IActionResult> CreatePost([FromForm] PostCreateDto dto)
         {
             string mediaPath = null;
+            var canManageAll = User.HasClaim("CanManageAll", "true");
+            var canManageSubordinates = User.HasClaim("CanManageOwnPosts", "true");
+
+            if (!canManageAll && !canManageSubordinates)
+            {
+                return Forbid();
+            }
 
             if (dto.File != null && dto.File.Length > 0)
             {
@@ -73,8 +80,13 @@ namespace backend.Controllers
                 mediaPath = $"uploads/{fileName}";
             }
 
+            var user = await _userManager.GetUserAsync(User);
+            var colaborador = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
+
             var post = new Post
             {
+                AuthorId = user.Id,
                 AuthorName = dto.AuthorName,
                 AuthorCargo = dto.AuthorCargo,
                 Content = dto.Content,
@@ -88,7 +100,8 @@ namespace backend.Controllers
             return Ok(post);
         }
 
-        // ✅ Listagem aberta — filtragem pode ser feita com Policies no futuro
+        // Listagem aberta — filtragem pode ser feita com Policies no futuro
+        // Rota: GET /posts
         [HttpGet]
         public async Task<IActionResult> GetPosts([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
@@ -109,6 +122,12 @@ namespace backend.Controllers
                     p.AuthorCargo,
                     p.Content,
                     p.MediaPath,
+                    AuthorSupervisorId = (
+                        from u in _context.Users
+                        join c in _context.Colaboradores on u.Email.ToLower() equals c.Email.ToLower()
+                        where u.Id == p.AuthorId
+                        select c.SupervisorId
+                    ).FirstOrDefault(),
                     Reactions = p.Reactions
                         .GroupBy(r => r.Type)
                         .Select(g => new
@@ -131,7 +150,8 @@ namespace backend.Controllers
             return Ok(new { Total = totalPosts, Page = page, PageSize = pageSize, Posts = posts });
         }
 
-        // ✅ Permite reagir — qualquer logado
+
+        // Permite reagir — qualquer logado
         [HttpPost("{id}/reactions")]
         public async Task<IActionResult> ToggleReaction(int id, [FromBody] string type)
         {
@@ -167,6 +187,7 @@ namespace backend.Controllers
             return Ok(new { action = "added", type });
         }
 
+        // Rota: GET /posts/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetPost(int id)
         {
@@ -181,6 +202,11 @@ namespace backend.Controllers
                     p.AuthorCargo,
                     p.Content,
                     p.MediaPath,
+                    AuthorSupervisorId = _context.Colaboradores
+                        .Where(c => c.Nome == p.AuthorName)
+                        .Select(c => c.SupervisorId)
+                        .FirstOrDefault(),
+
                     Reactions = p.Reactions
                         .GroupBy(r => r.Type)
                         .Select(g => new
@@ -204,12 +230,7 @@ namespace backend.Controllers
             return Ok(post);
         }
 
-        public class CommentDto
-        {
-            public string Text { get; set; } = string.Empty;
-        }
-
-        // ✅ Permite comentar — qualquer logado
+        // Permite comentar — qualquer logado
         [HttpPost("{id}/comments")]
         public async Task<IActionResult> AddComment(int id, [FromBody] CommentDto dto)
         {
@@ -235,32 +256,28 @@ namespace backend.Controllers
 
             return Ok(new { comment.Id, comment.UserName, comment.Text, comment.CreatedAt });
         }
-        
-        // ✅ Atualiza conteúdo do post
+
+        // Atualiza conteúdo do post
         [HttpPut("{id}")]
-        [Authorize(Policy = "CanManageOwnPosts")]
         public async Task<IActionResult> UpdatePost(int id, [FromBody] PostUpdateDto dto)
         {
             var post = await _context.Posts.FindAsync(id);
             if (post == null) return NotFound();
 
-            // Quem é o user atual?
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            var colaborador = await _context.Colaboradores
+            var currentColaborador = await _context.Colaboradores
                 .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
-            var userName = colaborador?.Nome ?? user.UserName;
+            var currentUserName = currentColaborador?.Nome ?? user.UserName;
 
-            // ✅ Permite:
-            // 1️⃣ Se for dono do post (seu nome = AuthorName)
-            // 2️⃣ OU se tiver Policy para gerenciar subordinados
-            // 3️⃣ OU se tiver CanManageAll
+            var author = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Nome == post.AuthorName);
 
+            var isSupervisor = author?.SupervisorId == user.Id;
             var canManageAll = User.HasClaim("CanManageAll", "true");
-            var canManageSubordinates = User.HasClaim("CanManageSubordinatesPosts", "true");
 
-            if (post.AuthorName != userName && !canManageAll && !canManageSubordinates)
+            if (post.AuthorName != currentUserName && !canManageAll && !isSupervisor)
             {
                 return Forbid();
             }
@@ -273,9 +290,9 @@ namespace backend.Controllers
             return Ok(new { message = "Post atualizado com sucesso.", post });
         }
 
-        // ✅ Deleta post — mesmo padrão de permissão
+
+        // Deleta post — mesmo padrão de permissão
         [HttpDelete("{id}")]
-        [Authorize(Policy = "CanManageOwnPosts")]
         public async Task<IActionResult> DeletePost(int id)
         {
             var post = await _context.Posts.FindAsync(id);
@@ -284,19 +301,22 @@ namespace backend.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            var colaborador = await _context.Colaboradores
+            var currentColaborador = await _context.Colaboradores
                 .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
-            var userName = colaborador?.Nome ?? user.UserName;
+            var currentUserName = currentColaborador?.Nome ?? user.UserName;
 
+            var author = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Nome == post.AuthorName);
+
+            var isSupervisor = author?.SupervisorId == user.Id;
             var canManageAll = User.HasClaim("CanManageAll", "true");
-            var canManageSubordinates = User.HasClaim("CanManageSubordinatesPosts", "true");
 
-            if (post.AuthorName != userName && !canManageAll && !canManageSubordinates)
+            if (post.AuthorName != currentUserName && !canManageAll && !isSupervisor)
             {
                 return Forbid();
             }
 
-            // Remove reações e comentários relacionados
+            // Remove reações e comentários
             var reactions = _context.Reactions.Where(r => r.PostId == id);
             var comments = _context.Comments.Where(c => c.PostId == id);
 
