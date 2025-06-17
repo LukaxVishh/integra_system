@@ -1,34 +1,55 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useAuth } from "../../utils/AuthContext";
+import { getFirstAndSecondName } from "../../types/NameHelpers";
 
 interface PostProps {
   id: number;
-  author: string;
+  authorName: string;
+  authorCargo: string;
   content: string;
   mediaPath?: string | null;
   reactions: { type: string; count: number; users?: string[] }[];
   comments: { userName: string; text: string; createdAt: string }[];
-  currentUser: string | null; // 👈 Novo
+  onDelete?: (id: number) => void; // ✅ Novo: callback para pai remover
 }
-
 
 const Post: React.FC<PostProps> = ({
   id,
-  author,
+  authorName,
+  authorCargo,
   content,
   mediaPath,
   reactions,
   comments: initialComments,
+  onDelete,
 }) => {
+  const { currentUser, roles } = useAuth();
   const [localReactions, setLocalReactions] = useState(reactions);
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState(initialComments);
   const [popupType, setPopupType] = useState<string | null>(null);
   const popupRef = useRef<HTMLDivElement>(null);
 
+  // Novo: Dropdown para editar/excluir
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // ✅ Edição
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState(content);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  const isOwner = currentUser && currentUser.nome === authorName;
+  const isManager = roles.includes("Gerente CA") || roles.includes("Gerente UA");
+  const isAdmin = roles.includes("Admin");
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
         setPopupType(null);
+      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -55,13 +76,10 @@ const Post: React.FC<PostProps> = ({
       });
 
       if (response.ok) {
-        console.log("Reação enviada com sucesso");
-        // 👉 BUSCAR NOVO ESTADO DESTE POST
         const newPost = await fetch(`http://localhost:5000/posts/${id}`, {
           credentials: "include",
         }).then(res => res.json());
 
-        // ✅ Atualiza apenas o localReactions com o backend real
         setLocalReactions(newPost.reactions);
       }
     } catch (err) {
@@ -69,15 +87,17 @@ const Post: React.FC<PostProps> = ({
     }
   };
 
-
   const handleAddComment = async () => {
-    if (comment.trim() === "") return;
+    if (comment.trim() === "" || !currentUser) return;
+
     try {
       const response = await fetch(`http://localhost:5000/posts/${id}/comments`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: comment.trim() }),
+        body: JSON.stringify({
+          text: comment.trim(),
+        }),
       });
       if (response.ok) {
         const newComment = await response.json();
@@ -89,24 +109,140 @@ const Post: React.FC<PostProps> = ({
     }
   };
 
+  // ✅ EDITAR
+  const handleEdit = () => {
+    setEditedContent(content);
+    setIsEditing(true);
+    setMenuOpen(false);
+  };
+
+  const handleSaveEdit = async () => {
+    setSavingEdit(true);
+    try {
+      const response = await fetch(`http://localhost:5000/posts/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: editedContent }),
+      });
+      if (response.ok) {
+        setIsEditing(false);
+      } else {
+        alert("Erro ao salvar edição.");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  // ✅ EXCLUIR
+  const handleDelete = async () => {
+    setMenuOpen(false);
+    if (!window.confirm("Tem certeza que deseja excluir este post?")) return;
+    try {
+      const response = await fetch(`http://localhost:5000/posts/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (response.ok) {
+        if (onDelete) onDelete(id);
+      } else {
+        alert("Erro ao excluir post.");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl shadow-md p-5 space-y-4 relative max-w-2xl mx-auto">
       {/* Cabeçalho */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-          {author[0].toUpperCase()}
+          {authorName[0].toUpperCase()}
         </div>
         <div>
-          <p className="font-semibold text-gray-800">{author}</p>
+          <p className="font-semibold text-gray-800">
+            {getFirstAndSecondName(authorName)}{" "}
+            <span className="text-xs text-gray-500">({authorCargo})</span>
+          </p>
           <p className="text-xs text-gray-500">Agora mesmo</p>
         </div>
+
+        {(isOwner || isManager || isAdmin) && (
+          <div className="relative ml-auto" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="p-2 rounded-full hover:bg-gray-200"
+            >
+              <svg
+                className="w-5 h-5 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 12h.01M12 12h.01M18 12h.01"
+                />
+              </svg>
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-32 bg-white border border-gray-200 shadow-lg rounded-md z-50">
+                <button
+                  onClick={handleEdit}
+                  className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                >
+                  Excluir
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Texto */}
-      <div
-        className="prose prose-sm max-w-none text-gray-800"
-        dangerouslySetInnerHTML={{ __html: content }}
-      />
+      {/* Texto ou edição */}
+      {isEditing ? (
+        <div className="space-y-2">
+          <textarea
+            value={editedContent}
+            onChange={(e) => setEditedContent(e.target.value)}
+            className="w-full border border-gray-300 rounded p-3"
+            rows={4}
+          />
+          <div className="flex gap-3">
+            <button
+              onClick={handleSaveEdit}
+              disabled={savingEdit}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              {savingEdit ? "Salvando..." : "Salvar"}
+            </button>
+            <button
+              onClick={() => setIsEditing(false)}
+              className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="prose prose-sm max-w-none text-gray-800"
+          dangerouslySetInnerHTML={{ __html: editedContent }}
+        />
+      )}
 
       {/* Mídia */}
       {mediaPath && mediaType && (
@@ -167,7 +303,7 @@ const Post: React.FC<PostProps> = ({
                           <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white text-xs">
                             {user[0].toUpperCase()}
                           </div>
-                          <span>{user}</span>
+                          <span>{getFirstAndSecondName(user)}</span>
                         </li>
                       ))
                   ) : (
@@ -207,7 +343,7 @@ const Post: React.FC<PostProps> = ({
                 {c.userName[0].toUpperCase()}
               </div>
               <div className="text-sm bg-gray-100 rounded-xl px-4 py-2">
-                <span className="font-semibold">{c.userName}:</span> {c.text}
+                <span className="font-semibold">{getFirstAndSecondName(c.userName)}:</span> {c.text}
               </div>
             </div>
           ))}

@@ -11,7 +11,8 @@ namespace backend.Entities
         [Key]
         public int Id { get; set; }
 
-        public string Author { get; set; } = string.Empty;
+        public string AuthorName { get; set; } = string.Empty;
+        public string AuthorCargo { get; set; } = string.Empty;
 
         public string Content { get; set; } = string.Empty;
 

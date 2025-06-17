@@ -1,37 +1,39 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using backend.Context;
 using backend.Entities;
 using backend.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Jpeg;
 using SixLabors.ImageSharp.Processing;
 
 namespace backend.Controllers
 {
-    [Authorize]
+    [Authorize] // ⚙️ Padrão: exige auth
     [Route("posts")]
     [ApiController]
     public class PostsController : Controller
     {
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        public PostsController(AppDbContext context, IWebHostEnvironment env)
+        public PostsController(AppDbContext context, IWebHostEnvironment env, UserManager<IdentityUser> userManager)
         {
             _context = context;
             _env = env;
+            _userManager = userManager;
         }
 
-        // POST: api/posts
+        // ✅ Cria post — requer permissão para criar
         [HttpPost]
+        [Authorize(Policy = "CanManageOwnPosts")]
         public async Task<IActionResult> CreatePost([FromForm] PostCreateDto dto)
         {
             string mediaPath = null;
@@ -43,33 +45,24 @@ namespace backend.Controllers
                     Directory.CreateDirectory(uploadsFolder);
 
                 var fileExtension = Path.GetExtension(dto.File.FileName).ToLower();
-
                 var fileName = $"{Guid.NewGuid()}";
-
-                var uploadPath = ""; // vamos definir abaixo
+                var uploadPath = "";
 
                 if (fileExtension == ".jpg" || fileExtension == ".jpeg" || fileExtension == ".png")
                 {
-                    // Processa imagem com ImageSharp
                     using var image = Image.Load(dto.File.OpenReadStream());
-
                     image.Mutate(x => x.Resize(new ResizeOptions
                     {
                         Mode = ResizeMode.Max,
-                        Size = new Size(1200, 0) // Máximo 1200px de largura, altura proporcional
+                        Size = new Size(1200, 0)
                     }));
 
-                    fileName += ".jpg"; // força JPEG recomprimido
+                    fileName += ".jpg";
                     uploadPath = Path.Combine(uploadsFolder, fileName);
-
-                    image.SaveAsJpeg(uploadPath, new JpegEncoder
-                    {
-                        Quality = 80 // recomprime para reduzir tamanho
-                    });
+                    image.SaveAsJpeg(uploadPath, new JpegEncoder { Quality = 80 });
                 }
                 else
                 {
-                    // Se for vídeo ou outro tipo, salva sem recomprimir
                     fileName += fileExtension;
                     uploadPath = Path.Combine(uploadsFolder, fileName);
 
@@ -80,10 +73,10 @@ namespace backend.Controllers
                 mediaPath = $"uploads/{fileName}";
             }
 
-
             var post = new Post
             {
-                Author = dto.Author,
+                AuthorName = dto.AuthorName,
+                AuthorCargo = dto.AuthorCargo,
                 Content = dto.Content,
                 MediaPath = mediaPath,
                 CreatedAt = DateTime.UtcNow
@@ -95,9 +88,8 @@ namespace backend.Controllers
             return Ok(post);
         }
 
-        // GET: api/posts?page=1&pageSize=20
+        // ✅ Listagem aberta — filtragem pode ser feita com Policies no futuro
         [HttpGet]
-        [Authorize]
         public async Task<IActionResult> GetPosts([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var query = _context.Posts
@@ -113,152 +105,208 @@ namespace backend.Controllers
                 .Select(p => new
                 {
                     p.Id,
-                    p.Author,
+                    p.AuthorName,
+                    p.AuthorCargo,
                     p.Content,
                     p.MediaPath,
                     Reactions = p.Reactions
                         .GroupBy(r => r.Type)
-                        .Select(g => new {
+                        .Select(g => new
+                        {
                             Type = g.Key,
                             Count = g.Count(),
                             Users = g.Select(r => r.UserName).ToList()
-                        })
-                        .ToList(),
+                        }),
                     Comments = p.Comments
                         .OrderBy(c => c.CreatedAt)
-                        .Select(c => new {
+                        .Select(c => new
+                        {
                             c.UserName,
                             c.Text,
                             CreatedAt = c.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
                         })
-                        .ToList()
                 })
                 .ToListAsync();
 
-            return Ok(new
-            {
-                Total = totalPosts,
-                Page = page,
-                PageSize = pageSize,
-                Posts = posts
-            });
+            return Ok(new { Total = totalPosts, Page = page, PageSize = pageSize, Posts = posts });
         }
 
-
+        // ✅ Permite reagir — qualquer logado
         [HttpPost("{id}/reactions")]
-        [Authorize]
         public async Task<IActionResult> ToggleReaction(int id, [FromBody] string type)
         {
             var post = await _context.Posts.FindAsync(id);
             if (post == null) return NotFound();
 
-            var userName = User.Identity?.Name ?? "Anonymous";
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
 
-            // Verificar se já existe essa reação
-            var existingReaction = await _context.Reactions
-                .FirstOrDefaultAsync(r => r.PostId == id && r.UserName == userName && r.Type == type);
+            var colaborador = await _context.Colaboradores.FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
+            var userName = colaborador?.Nome ?? user.UserName;
+
+            var existingReaction = await _context.Reactions.FirstOrDefaultAsync(r => r.PostId == id && r.UserName == userName && r.Type == type);
 
             if (existingReaction != null)
             {
-                // Se existe, remover (toggle off)
                 _context.Reactions.Remove(existingReaction);
                 await _context.SaveChangesAsync();
                 return Ok(new { action = "removed", type });
             }
 
-            // OPCIONAL: remover reações de outros tipos, se quiser permitir só 1 tipo por vez:
+            // Se quiser permitir só uma reação por usuário, pode limpar as outras
             var otherReactions = await _context.Reactions
                 .Where(r => r.PostId == id && r.UserName == userName && r.Type != type)
                 .ToListAsync();
 
             if (otherReactions.Any())
-            {
                 _context.Reactions.RemoveRange(otherReactions);
-            }
 
-            // Adicionar a nova reação
-            var reaction = new Reaction
-            {
-                PostId = id,
-                Type = type,
-                UserName = userName
-            };
-
-            _context.Reactions.Add(reaction);
+            _context.Reactions.Add(new Reaction { PostId = id, Type = type, UserName = userName });
             await _context.SaveChangesAsync();
 
             return Ok(new { action = "added", type });
         }
 
-        // GET: /posts/{id}
         [HttpGet("{id}")]
-        [Authorize]
         public async Task<IActionResult> GetPost(int id)
         {
             var post = await _context.Posts
                 .Include(p => p.Reactions)
                 .Include(p => p.Comments)
                 .Where(p => p.Id == id)
-                .Select(p => new {
+                .Select(p => new
+                {
                     p.Id,
-                    p.Author,
+                    p.AuthorName,
+                    p.AuthorCargo,
                     p.Content,
                     p.MediaPath,
                     Reactions = p.Reactions
                         .GroupBy(r => r.Type)
-                        .Select(g => new {
+                        .Select(g => new
+                        {
                             Type = g.Key,
                             Count = g.Count(),
                             Users = g.Select(r => r.UserName).ToList()
-                        })
-                        .ToList(),
+                        }),
                     Comments = p.Comments
                         .OrderBy(c => c.CreatedAt)
-                        .Select(c => new {
+                        .Select(c => new
+                        {
                             c.UserName,
                             c.Text,
                             CreatedAt = c.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
                         })
-                        .ToList()
                 })
                 .FirstOrDefaultAsync();
 
             if (post == null) return NotFound();
-
             return Ok(post);
         }
 
-
-        
         public class CommentDto
         {
             public string Text { get; set; } = string.Empty;
         }
 
+        // ✅ Permite comentar — qualquer logado
         [HttpPost("{id}/comments")]
-        [Authorize]
         public async Task<IActionResult> AddComment(int id, [FromBody] CommentDto dto)
         {
             var post = await _context.Posts.FindAsync(id);
             if (post == null) return NotFound();
 
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var colaborador = await _context.Colaboradores.FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
+            var userName = colaborador?.Nome ?? user.UserName;
+
             var comment = new Comment
             {
                 PostId = id,
                 Text = dto.Text,
-                UserName = User.Identity?.Name ?? "Anonymous",
+                UserName = userName,
                 CreatedAt = DateTime.UtcNow
             };
 
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
-            return Ok(new {
-                comment.Id,
-                comment.UserName,
-                comment.Text,
-                comment.CreatedAt
-            });
+            return Ok(new { comment.Id, comment.UserName, comment.Text, comment.CreatedAt });
+        }
+        
+        // ✅ Atualiza conteúdo do post
+        [HttpPut("{id}")]
+        [Authorize(Policy = "CanManageOwnPosts")]
+        public async Task<IActionResult> UpdatePost(int id, [FromBody] PostUpdateDto dto)
+        {
+            var post = await _context.Posts.FindAsync(id);
+            if (post == null) return NotFound();
+
+            // Quem é o user atual?
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var colaborador = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
+            var userName = colaborador?.Nome ?? user.UserName;
+
+            // ✅ Permite:
+            // 1️⃣ Se for dono do post (seu nome = AuthorName)
+            // 2️⃣ OU se tiver Policy para gerenciar subordinados
+            // 3️⃣ OU se tiver CanManageAll
+
+            var canManageAll = User.HasClaim("CanManageAll", "true");
+            var canManageSubordinates = User.HasClaim("CanManageSubordinatesPosts", "true");
+
+            if (post.AuthorName != userName && !canManageAll && !canManageSubordinates)
+            {
+                return Forbid();
+            }
+
+            post.Content = dto.Content ?? post.Content;
+            post.AuthorCargo = dto.AuthorCargo ?? post.AuthorCargo;
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Post atualizado com sucesso.", post });
+        }
+
+        // ✅ Deleta post — mesmo padrão de permissão
+        [HttpDelete("{id}")]
+        [Authorize(Policy = "CanManageOwnPosts")]
+        public async Task<IActionResult> DeletePost(int id)
+        {
+            var post = await _context.Posts.FindAsync(id);
+            if (post == null) return NotFound();
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var colaborador = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
+            var userName = colaborador?.Nome ?? user.UserName;
+
+            var canManageAll = User.HasClaim("CanManageAll", "true");
+            var canManageSubordinates = User.HasClaim("CanManageSubordinatesPosts", "true");
+
+            if (post.AuthorName != userName && !canManageAll && !canManageSubordinates)
+            {
+                return Forbid();
+            }
+
+            // Remove reações e comentários relacionados
+            var reactions = _context.Reactions.Where(r => r.PostId == id);
+            var comments = _context.Comments.Where(c => c.PostId == id);
+
+            _context.Reactions.RemoveRange(reactions);
+            _context.Comments.RemoveRange(comments);
+            _context.Posts.Remove(post);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Post removido com sucesso." });
         }
     }
 }

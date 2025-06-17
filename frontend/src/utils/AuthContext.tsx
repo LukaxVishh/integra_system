@@ -1,11 +1,20 @@
-// utils/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
+
+interface UserInfo {
+  id: string;
+  userName: string;
+  email: string;
+  nome: string;
+  cargo: string;
+  ua: string;
+  claims: string[];
+}
 
 interface AuthContextProps {
   roles: string[];
   setRoles: React.Dispatch<React.SetStateAction<string[]>>;
-  currentUser: string | null;
-  setCurrentUser: React.Dispatch<React.SetStateAction<string | null>>;
+  currentUser: UserInfo | null;  // ✅ objeto completo com claims
+  setCurrentUser: React.Dispatch<React.SetStateAction<UserInfo | null>>;
   isLoading: boolean;
   resetLoading: () => void;
   isLoggingOut: boolean;
@@ -16,43 +25,54 @@ const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [roles, setRoles] = useState<string[]>([]);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const fetchRoles = async () => {
+  const fetchUserInfoAndRoles = async () => {
     try {
-      const response = await fetch("http://localhost:5000/users/roles", {
+      // ✅ 1) Info + claims
+      const userResponse = await fetch("http://localhost:5000/users/me", {
         method: "GET",
         credentials: "include",
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Roles carregadas:", data.roles);
-        setRoles(data.roles || []);
-
-        // 👉 Se sua API devolver o nome do usuário:
-        if (data.userName) {
-          setCurrentUser(data.userName);
-        }
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        console.log("✅ Dados do usuário:", userData);
+        setCurrentUser(userData);
       } else {
-        console.error("Erro ao buscar roles do usuário.");
+        console.error("❌ Erro ao buscar info do usuário");
       }
-    } catch (error) {
-      console.error("Erro ao conectar com o servidor:", error);
+
+      // ✅ 2) Roles separadas, se quiser continuar usando para guards
+      const rolesResponse = await fetch("http://localhost:5000/users/roles", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (rolesResponse.ok) {
+        const rolesData = await rolesResponse.json();
+        console.log("✅ Roles:", rolesData.roles);
+        setRoles(rolesData.roles || []);
+      } else {
+        console.error("❌ Erro ao buscar roles");
+      }
+
+    } catch (err) {
+      console.error("❌ Erro de conexão:", err);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRoles();
+    fetchUserInfoAndRoles();
   }, []);
 
   const resetLoading = () => {
     setIsLoading(true);
-    fetchRoles();
+    fetchUserInfoAndRoles();
   };
 
   return (

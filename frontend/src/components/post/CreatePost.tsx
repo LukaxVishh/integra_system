@@ -14,6 +14,7 @@ import Color from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
 import { FontFamily } from "../../types/FontFamily";
 import { FontSize } from "../../types/FonSize";
+import { useAuth } from "../../utils/AuthContext"; // ✅ Importa contexto
 
 const EyeIcon = (
   <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -31,6 +32,7 @@ const TrashIcon = (
 const visibilityOptions = ["Agência", "Centro Administrativo", "Cooperativa"];
 
 const CreatePost: React.FC = () => {
+  const { currentUser } = useAuth(); // ✅ Usa o contexto
   const [visibility, setVisibility] = useState("Agência");
   const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -86,10 +88,17 @@ const CreatePost: React.FC = () => {
   if (!editor) return null;
 
   const handlePost = async () => {
+    if (!currentUser) {
+      alert("Usuário não autenticado. Faça login novamente.");
+      return;
+    }
+
     const html = editor.getHTML();
     const formData = new FormData();
-    formData.append("author", "Seu Nome Aqui");
+    formData.append("authorName", currentUser.nome); // ✅ Nome real
+    formData.append("authorCargo", currentUser.cargo); // ✅ Cargo real
     formData.append("content", html);
+    formData.append("visibility", visibility);
     if (mediaFile) formData.append("file", mediaFile);
 
     try {
@@ -164,7 +173,7 @@ const CreatePost: React.FC = () => {
             {[1, 2, 3].map(level => (
               <button
                 key={level}
-                onClick={() => editor.chain().focus().toggleHeading({ level: level as any }).run()}
+                onClick={() => editor.chain().focus().toggleHeading({ level: level as 1 | 2 | 3 }).run()}
                 className={`px-2 py-1 rounded ${isActive("heading", { level }) ? "bg-blue-100 text-blue-600" : "hover:bg-gray-200"}`}
               >
                 H{level}
@@ -277,11 +286,12 @@ const CreatePost: React.FC = () => {
         </div>
 
         <div className="flex justify-end px-3 pb-5">
-          <button onClick={handlePost} className="px-6 py-2 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700">Publicar</button>
+          <button onClick={handlePost} className="px-6 py-2 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700">
+            Publicar
+          </button>
         </div>
       </div>
 
-      {/* ✅ POPUP DE SUCESSO */}
       {successPopup && (
         <div className="absolute top-5 right-5 bg-green-100 border border-green-700 text-green-900 px-4 py-2 rounded shadow transition-opacity">
           Post publicado com sucesso!

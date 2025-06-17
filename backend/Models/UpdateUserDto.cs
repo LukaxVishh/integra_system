@@ -12,5 +12,6 @@ namespace backend.Models
         public string Cargo { get; set; }
         public string UA { get; set; }
         public string[] Roles { get; set; }
+        public string SupervisorId { get; set; } = string.Empty;
     }
 }

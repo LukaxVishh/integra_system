@@ -14,7 +14,8 @@ namespace backend.Entities
         [Required, EmailAddress(ErrorMessage = "O e-mail coorporativo deve ser informado.")]
         public string Email { get; set; }
         public string Cargo { get; set; }
-        public string UA  { get; set; }
+        public string UA { get; set; }
+        public string SupervisorId { get; set; }
 
     }
 }

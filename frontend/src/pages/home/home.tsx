@@ -4,13 +4,13 @@ import Footer from "../../components/footer/Footer";
 import Sidebar from "../../components/sidebar/Sidebar";
 import CreatePost from "../../components/post/CreatePost";
 import Post from "../../components/post/Post";
-import { useAuth } from "../../utils/AuthContext";
+
 
 const Home: React.FC = () => {
   const [posts, setPosts] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const { currentUser } = useAuth();
+
 
   const pageSize = 20;
 
@@ -62,12 +62,12 @@ const Home: React.FC = () => {
               <Post
                 key={post.id}
                 id={post.id}
-                author={post.author}
+                authorName={post.authorName}
+                authorCargo={post.authorCargo}
                 content={post.content}
                 mediaPath={post.mediaPath}
                 reactions={post.reactions}
                 comments={post.comments}
-                currentUser={currentUser}
               />
             ))}
           </div>
