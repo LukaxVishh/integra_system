@@ -1,7 +1,7 @@
 // CicloInfinitePosts.tsx - Correto e comentado
 import React, { useState, useEffect, useRef } from "react";
 import CicloPostCard from "./CicloPostCard";
-import CreateCicloPost from "./CreateCicloPost";
+import CreateCicloPost from "../informativos/CreateCicloPost";
 
 interface PostData {
   id: number;

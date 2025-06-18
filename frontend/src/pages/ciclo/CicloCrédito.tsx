@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Navbar from "../../components/navbar/Navbar";
 import Footer from "../../components/footer/Footer";
-import CicloInfinitePosts from "../../components/ciclo_credito/CicloInfinitePosts";
+import CicloInfinitePosts from "../../components/ciclo_credito/informativos/CicloInfinitePosts";
 
 const CicloCredito: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"informativos" | "orientador" | "colaboradores" | null>(null);

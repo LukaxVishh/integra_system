@@ -12,10 +12,10 @@ import Link from "@tiptap/extension-link";
 import HorizontalRule from "@tiptap/extension-horizontal-rule";
 import Color from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
-import { FontFamily } from "../../types/FontFamily";
-import { FontSize } from "../../types/FonSize";
-import { useAuth } from "../../utils/AuthContext";
-import { getFirstAndSecondName } from "../../types/NameHelpers";
+import { FontFamily } from "../../../types/FontFamily";
+import { FontSize } from "../../../types/FonSize";
+import { useAuth } from "../../../utils/AuthContext";
+import { getFirstAndSecondName } from "../../../types/NameHelpers";
 
 interface CicloPostCardProps {
   id: number;

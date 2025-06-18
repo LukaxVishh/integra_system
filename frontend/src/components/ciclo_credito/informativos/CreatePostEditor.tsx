@@ -14,9 +14,9 @@ import Link from "@tiptap/extension-link";
 import HorizontalRule from "@tiptap/extension-horizontal-rule";
 import Color from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
-import { FontFamily } from "../../types/FontFamily";
-import { FontSize } from "../../types/FonSize";
-import { useAuth } from "../../utils/AuthContext";
+import { FontFamily } from "../../../types/FontFamily";
+import { FontSize } from "../../../types/FonSize";
+import { useAuth } from "../../../utils/AuthContext";
 
 const TrashIcon = (
   <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
