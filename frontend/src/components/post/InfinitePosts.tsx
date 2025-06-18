@@ -43,9 +43,18 @@ const InfinitePosts: React.FC = () => {
       const res = await fetch(`http://localhost:5000/posts?page=${page}&pageSize=${pageSize}`, {
         credentials: "include",
       });
-      const data = await res.json();
+
+      const data: { posts: PostData[] } = await res.json();
+
       if (data.posts.length < pageSize) setHasMore(false);
-      setPosts((prev) => [...prev, ...data.posts]);
+
+      setPosts((prev) => {
+        const newPosts = data.posts.filter(
+          (p) => !prev.some((existing) => existing.id === p.id)
+        );
+        return [...prev, ...newPosts];
+      });
+
       setPage((prev) => prev + 1);
     } catch (err) {
       console.error("Erro ao buscar posts:", err);
@@ -74,7 +83,7 @@ const InfinitePosts: React.FC = () => {
   }, [hasMore, loading]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 w-full">
       <CreatePost />
       {posts.map((post) => (
         <Post key={post.id} {...post} />

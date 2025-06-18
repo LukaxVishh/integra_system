@@ -1,8 +1,11 @@
-import { BriefcaseIcon, ArrowTrendingUpIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import { BriefcaseIcon, ArrowTrendingUpIcon, CheckCircleIcon, Bars3Icon } from "@heroicons/react/24/outline";
 
 const Sidebar: React.FC = () => (
-  <aside className="w-64 bg-white rounded-2xl shadow p-4 hidden lg:block border border-[#E6F4EA]">
-    <h2 className="text-lg font-bold text-[#0F9D58] mb-4">Menu</h2>
+  <aside className="inline-block bg-white rounded-2xl shadow p-4 border border-[#E6F4EA]">
+    <div className="flex items-center gap-2 mb-4">
+      <Bars3Icon className="w-5 h-5 text-[#0F9D58]" />
+      <h2 className="text-lg font-bold text-[#0F9D58]">Menu</h2>
+    </div>
     <ul className="space-y-2">
       <li>
         <button

@@ -172,6 +172,7 @@ namespace backend.Controllers
                     p.AuthorCargo,
                     p.Content,
                     p.MediaPath,
+                    p.CreatedAt,
                     AuthorSupervisorId = (
                         from u in _context.Users
                         join c in _context.Colaboradores on u.Email.ToLower() equals c.Email.ToLower()
@@ -258,6 +259,7 @@ namespace backend.Controllers
                     p.AuthorCargo,
                     p.Content,
                     p.MediaPath,
+                    p.CreatedAt,
                     AuthorSupervisorId = _context.Colaboradores
                         .Where(c => c.Nome == p.AuthorName)
                         .Select(c => c.SupervisorId)
