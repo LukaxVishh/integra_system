@@ -19,6 +19,8 @@ interface AuthContextProps {
   resetLoading: () => void;
   isLoggingOut: boolean;
   setIsLoggingOut: React.Dispatch<React.SetStateAction<boolean>>;
+  hasClaim: (claim: string) => boolean;
+  hasAnyClaim: (claims: string[]) => boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -31,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserInfoAndRoles = async () => {
     try {
-      // ✅ 1) Info + claims
+      // 1️⃣ Info + claims
       const userResponse = await fetch("http://localhost:5000/users/me", {
         method: "GET",
         credentials: "include",
@@ -45,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error("❌ Erro ao buscar info do usuário");
       }
 
-      // ✅ 2) Roles separadas, se quiser continuar usando para guards
+      // 2️⃣ Roles separadas
       const rolesResponse = await fetch("http://localhost:5000/users/roles", {
         method: "GET",
         credentials: "include",
@@ -75,6 +77,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchUserInfoAndRoles();
   };
 
+  // ✅ Novo helper: verifica claim única
+  const hasClaim = (claim: string) => {
+    return currentUser?.claims?.includes(claim) || false;
+  };
+
+  // ✅ Novo helper: verifica se o usuário tem QUALQUER claim da lista
+  const hasAnyClaim = (claims: string[]) => {
+    return claims.some((claim) => hasClaim(claim));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -86,6 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resetLoading,
         isLoggingOut,
         setIsLoggingOut,
+        hasClaim,
+        hasAnyClaim,
       }}
     >
       {children}

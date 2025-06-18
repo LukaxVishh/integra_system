@@ -60,16 +60,18 @@ namespace backend.Controllers
         {
             return roleName switch
             {
-                "Admin" => new List<System.Security.Claims.Claim> { new("CanManageAll", "true"), new("CanManageOwnPosts", "true") },
+                "Admin" => new List<System.Security.Claims.Claim> { new("CanManageAll", "true") },
                 "Gerente CA" => new List<System.Security.Claims.Claim>
                 {
                     new("CanViewCA", "true"),
-                    new("CanManageSubordinatesPosts", "true")
+                    new("CanManageSubordinatesPosts", "true"),
+                    new("CanManageOwnPosts", "true")
                 },
                 "Gerente UA" => new List<System.Security.Claims.Claim>
                 {
                     new("CanViewUA", "true"),
-                    new("CanManageSubordinatesPosts", "true")
+                    new("CanManageSubordinatesPosts", "true"),
+                    new("CanManageOwnPosts", "true")
                 },
                 "Analista CA" => new List<System.Security.Claims.Claim>
                 {
