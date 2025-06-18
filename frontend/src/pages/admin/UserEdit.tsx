@@ -173,7 +173,7 @@ const UserEdit: React.FC = () => {
       nome,
       email,
       cargo,
-      ua,
+      Centro_de_Custo: parseInt(ua),
       roles: selectedRoles
     };
     if (isLowLevel) payload.supervisorId = supervisorId;
@@ -243,7 +243,7 @@ const UserEdit: React.FC = () => {
             </div>
             <div>
               <label className="block font-semibold">UA</label>
-              <input type="text" value={ua} onChange={e => setUa(e.target.value)}
+              <input type="number" value={ua} onChange={e => setUa(e.target.value)}
                 className="w-full border border-gray-300 rounded p-2" />
             </div>
             <div>

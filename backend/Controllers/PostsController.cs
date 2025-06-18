@@ -91,7 +91,8 @@ namespace backend.Controllers
                 AuthorCargo = dto.AuthorCargo,
                 Content = dto.Content,
                 MediaPath = mediaPath,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                Visibility = dto.Visibility
             };
 
             _context.Posts.Add(post);
@@ -105,10 +106,59 @@ namespace backend.Controllers
         [HttpGet]
         public async Task<IActionResult> GetPosts([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
+            var user = await _userManager.GetUserAsync(User);
+            var colaborador = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
+
+            if (colaborador == null)
+            {
+                return Forbid();
+            }
+
+            var userCC = colaborador.Centro_de_Custo;
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var isAdmin = roles.Contains("Admin", StringComparer.OrdinalIgnoreCase);
+            var isCA = roles.Any(r => r.Contains("CA", StringComparison.OrdinalIgnoreCase));
+            var isUA = roles.Any(r => r.Contains("UA", StringComparison.OrdinalIgnoreCase));
+
+            // Se não for Admin, CA ou UA => Proibido
+            if (!isAdmin && !isCA && !isUA)
+            {
+                return Forbid("Tipo de usuário não identificado como Admin, CA ou UA.");
+            }
+
+            // Base query
             var query = _context.Posts
                 .Include(p => p.Reactions)
                 .Include(p => p.Comments)
-                .OrderByDescending(p => p.Id);
+                .OrderByDescending(p => p.Id)
+                .AsQueryable();
+
+            // Se não for Admin, aplica filtro de visibilidade e centro de custo
+            if (!isAdmin)
+            {
+                query = query.Where(p =>
+                    p.Visibility == "Cooperativa" ||
+                    (
+                        (
+                            (isCA && p.Visibility == "Centro Administrativo") ||
+                            (isUA && p.Visibility == "Agência")
+                        )
+                        &&
+                        (
+                            _context.Colaboradores
+                                .Where(c => c.Email.ToLower() ==
+                                    (_context.Users.Where(u => u.Id == p.AuthorId)
+                                        .Select(u => u.Email.ToLower())
+                                        .FirstOrDefault())
+                                )
+                                .Select(c => c.Centro_de_Custo)
+                                .FirstOrDefault() == userCC
+                        )
+                    )
+                );
+            }
 
             var totalPosts = await query.CountAsync();
 
@@ -147,7 +197,13 @@ namespace backend.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(new { Total = totalPosts, Page = page, PageSize = pageSize, Posts = posts });
+            return Ok(new
+            {
+                Total = totalPosts,
+                Page = page,
+                PageSize = pageSize,
+                Posts = posts
+            });
         }
 
 

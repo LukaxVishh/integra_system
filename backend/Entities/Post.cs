@@ -18,6 +18,7 @@ namespace backend.Entities
         public string Content { get; set; } = string.Empty;
 
         public string MediaPath { get; set; }
+        public string Visibility { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public List<Reaction> Reactions { get; set; } = new();

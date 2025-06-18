@@ -99,7 +99,6 @@ namespace backend.Controllers
             };
         }
 
-
         [Authorize(Policy = "CanManageAll")]
         [HttpGet]
         public async Task<IActionResult> GetUsers(
@@ -112,6 +111,7 @@ namespace backend.Controllers
             if (!string.IsNullOrWhiteSpace(userName))
                 query = query.Where(u => u.UserName.Contains(userName));
 
+            query = query.OrderBy(u => u.UserName);
             var totalUsers = await query.CountAsync();
             var users = await query
                 .Skip((page - 1) * limit)
@@ -126,7 +126,6 @@ namespace backend.Controllers
             });
         }
 
-        // GET ROLES + CLAIMS: Admin ou Gerente CA
         [Authorize(Policy = "CanManageAll")]
         [HttpGet("{id}/roles")]
         public async Task<IActionResult> GetUserRoles(string id)
@@ -162,7 +161,7 @@ namespace backend.Controllers
                 email = user.Email,
                 nome = colaborador?.Nome ?? "Não encontrado",
                 cargo = colaborador?.Cargo ?? "Não informado",
-                ua = colaborador?.UA ?? "Não informada",
+                ua = colaborador != null ? colaborador.Centro_de_Custo.ToString() : "Não informado",
                 supervisorId = colaborador?.SupervisorId,
                 supervisorName = supervisor?.Nome,
                 roles = roles.Select(r => new
@@ -171,12 +170,10 @@ namespace backend.Controllers
                     assigned = userRoles.Contains(r.Name)
                 }),
                 supervisors,
-                claims = userClaims.Select(c => c.Type).Distinct().ToList()  // <--- AQUI!
+                claims = userClaims.Select(c => c.Type).Distinct().ToList()
             });
         }
 
-
-        // UPDATE USER ROLES: Admin ou Gerente CA
         [Authorize(Policy = "CanManageAll")]
         [HttpPost("{id}/roles")]
         public async Task<IActionResult> UpdateUserRoles(string id, [FromBody] List<string> newRoles)
@@ -197,7 +194,6 @@ namespace backend.Controllers
             return Ok("Roles atualizadas com sucesso.");
         }
 
-        // UPDATE USER: Admin ou Gerente CA
         [Authorize(Policy = "CanManageAll")]
         [HttpPut("{userId}")]
         public async Task<IActionResult> UpdateUser(string userId, [FromBody] UpdateUserDto dto)
@@ -224,7 +220,7 @@ namespace backend.Controllers
                     Nome = dto.Nome,
                     Email = dto.Email,
                     Cargo = dto.Cargo,
-                    UA = dto.UA,
+                    Centro_de_Custo = dto.Centro_de_Custo,
                     SupervisorId = null
                 };
                 _context.Colaboradores.Add(colaborador);
@@ -233,7 +229,7 @@ namespace backend.Controllers
             {
                 colaborador.Nome = dto.Nome;
                 colaborador.Cargo = dto.Cargo;
-                colaborador.UA = dto.UA;
+                colaborador.Centro_de_Custo = dto.Centro_de_Custo;
             }
 
             bool isSubordinate = dto.Roles.Any(r =>
@@ -293,12 +289,11 @@ namespace backend.Controllers
                 email = user.Email,
                 nome = colaborador.Nome,
                 cargo = colaborador.Cargo,
-                ua = colaborador.UA,
+                ua = colaborador.Centro_de_Custo.ToString(),
                 claims = claims.Select(c => c.Type).ToList(),
                 roles,
             });
         }
-
 
         [Authorize(Policy = "CanManageAll")]
         [HttpGet("gerentes")]
@@ -318,25 +313,21 @@ namespace backend.Controllers
             var userClaims = await _userManager.GetClaimsAsync(user);
             var userRoles = await _userManager.GetRolesAsync(user);
 
-            // Recalcula claims esperadas baseadas nas roles
             var expectedClaims = new List<System.Security.Claims.Claim>();
             foreach (var role in userRoles)
                 expectedClaims.AddRange(GetDefaultClaimsForRole(role));
 
-            // Evita duplicidade
             expectedClaims = expectedClaims
                 .GroupBy(c => new { c.Type, c.Value })
                 .Select(g => g.First())
                 .ToList();
 
-            // Remove claims extras
             foreach (var claim in userClaims)
             {
                 if (!expectedClaims.Any(c => c.Type == claim.Type && c.Value == claim.Value))
                     await _userManager.RemoveClaimAsync(user, claim);
             }
 
-            // Adiciona faltantes
             foreach (var claim in expectedClaims)
             {
                 if (!userClaims.Any(c => c.Type == claim.Type && c.Value == claim.Value))
@@ -345,6 +336,5 @@ namespace backend.Controllers
 
             return Ok(new { message = "Claims sincronizadas com base nas roles atuais!" });
         }
-
     }
 }

@@ -8,5 +8,6 @@ namespace backend.Models
         public string AuthorCargo { get; set; }
         public string Content { get; set; } = string.Empty;
         public IFormFile File { get; set; }
+        public string Visibility { get; set; }
     }
 }
