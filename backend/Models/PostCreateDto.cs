@@ -4,8 +4,10 @@ namespace backend.Models
 {
     public class PostCreateDto
     {
-        public string Author { get; set; } = string.Empty;
+        public string AuthorName { get; set; }
+        public string AuthorCargo { get; set; }
         public string Content { get; set; } = string.Empty;
         public IFormFile File { get; set; }
+        public string Visibility { get; set; }
     }
 }

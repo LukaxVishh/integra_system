@@ -8,3 +8,18 @@
 .custom-prosemirror hr {
   display: none;
 }
+
+@keyframes slidefade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slidefade {
+  animation: slidefade 0.5s ease-out;
+}

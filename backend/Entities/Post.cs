@@ -10,12 +10,15 @@ namespace backend.Entities
     {
         [Key]
         public int Id { get; set; }
+        public string AuthorId { get; set; }
 
-        public string Author { get; set; } = string.Empty;
+        public string AuthorName { get; set; } = string.Empty;
+        public string AuthorCargo { get; set; } = string.Empty;
 
         public string Content { get; set; } = string.Empty;
 
         public string MediaPath { get; set; }
+        public string Visibility { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public List<Reaction> Reactions { get; set; } = new();

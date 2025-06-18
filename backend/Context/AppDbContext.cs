@@ -18,6 +18,7 @@ namespace backend.Context
         public DbSet<Post> Posts { get; set; }
         public DbSet<Reaction> Reactions { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<AvailableClaim> AvailableClaims { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

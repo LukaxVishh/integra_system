@@ -12,7 +12,7 @@ import FirstAccsses from "./pages/acessos/FirstAccess";
 
 const AppContent: React.FC = () => {
   const { isLoading } = useAuth();
-  const allowedRoles = ["Admin", "Gerente CA"];
+  const allowedRoles = ["Admin"];
 
   if (isLoading) {
     // Exibe uma tela de carregamento enquanto os dados estão sendo carregados

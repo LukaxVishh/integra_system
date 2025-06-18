@@ -218,6 +218,22 @@ namespace backend.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("backend.Entities.AvailableClaim", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AvailableClaims");
+                });
+
             modelBuilder.Entity("backend.Entities.Colaborador", b =>
                 {
                     b.Property<int>("Id")
@@ -229,6 +245,9 @@ namespace backend.Migrations
                     b.Property<string>("Cargo")
                         .HasColumnType("text");
 
+                    b.Property<int>("Centro_de_Custo")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
@@ -238,7 +257,7 @@ namespace backend.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("UA")
+                    b.Property<string>("SupervisorId")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -281,7 +300,13 @@ namespace backend.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Author")
+                    b.Property<string>("AuthorCargo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorName")
                         .HasColumnType("text");
 
                     b.Property<string>("Content")
@@ -291,6 +316,9 @@ namespace backend.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("MediaPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Visibility")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
