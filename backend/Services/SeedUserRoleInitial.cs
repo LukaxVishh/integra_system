@@ -50,8 +50,6 @@ namespace backend.Services
             var usersToSeed = new List<(string Email, string Password, string Role)>
             {
                 ("admin@empresa.com", "Senha@123", "Admin"),
-                ("gerente@empresa.com", "Senha@123", "Gerente-CA"),
-                ("analista@empresa.com", "Senha@123", "Analista")
             };
 
             foreach (var (email, password, role) in usersToSeed)

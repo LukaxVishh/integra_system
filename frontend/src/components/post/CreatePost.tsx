@@ -33,7 +33,7 @@ const visibilityOptions = ["Cooperativa", "Centro Administrativo", "Agência"];
 
 const CreatePost: React.FC = () => {
   const { currentUser } = useAuth();
-  const [visibility, setVisibility] = useState("Agência");
+  const [visibility, setVisibility] = useState("Cooperativa");
   const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
@@ -154,15 +154,21 @@ const CreatePost: React.FC = () => {
 
   {/* Olho canto superior direito */}
   <div className="absolute top-7 right-6 z-10">
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setShowVisibilityDropdown(v => !v)}
-        className="w-9 h-9 rounded-full bg-[#E6F4EA] hover:bg-[#C3E6CD] flex items-center justify-center"
-      >
-        {EyeIcon}
-      </button>
-      {showVisibilityDropdown && (
-        <div className="absolute right-0 top-full mt-2 bg-white border border-[#E6F4EA] rounded shadow z-20">
+    <div className="absolute top-1 right-2 z-10">
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setShowVisibilityDropdown(v => !v)}
+          className="w-9 h-9 rounded-full bg-[#E6F4EA] hover:bg-[#C3E6CD] flex items-center justify-center"
+        >
+          {EyeIcon}
+        </button>
+        <div
+          className={`absolute right-0 top-full mt-2 bg-white border border-[#E6F4EA] rounded shadow z-20 transition-all duration-200 ${
+            showVisibilityDropdown
+              ? "opacity-100 translate-y-0 pointer-events-auto"
+              : "opacity-0 -translate-y-2 pointer-events-none"
+          }`}
+        >
           {visibilityOptions.map(option => (
             <button
               key={option}
@@ -178,7 +184,7 @@ const CreatePost: React.FC = () => {
             </button>
           ))}
         </div>
-      )}
+      </div>
     </div>
   </div>
 
