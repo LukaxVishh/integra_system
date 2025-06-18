@@ -1,6 +1,7 @@
+// CicloInfinitePosts.tsx - Correto e comentado
 import React, { useState, useEffect, useRef } from "react";
-import Post from "./Post";
-import CreatePost from "./CreatePost";
+import CicloPostCard from "./CicloPostCard";
+import CreateCicloPost from "./CreateCicloPost";
 
 interface PostData {
   id: number;
@@ -8,9 +9,6 @@ interface PostData {
   authorCargo: string;
   content: string;
   mediaPath?: string | null;
-  reactions: { type: string; count: number; users?: string[] }[];
-  comments: { userName: string; text: string; createdAt: string }[];
-  authorSupervisorId?: string | null;
   createdAt: string;
 }
 
@@ -29,7 +27,7 @@ const SkeletonPost = () => (
   </div>
 );
 
-const InfinitePosts: React.FC = () => {
+const CicloInfinitePosts: React.FC = () => {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -41,24 +39,24 @@ const InfinitePosts: React.FC = () => {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/posts?page=${page}&pageSize=${pageSize}`, {
+      const res = await fetch(`http://localhost:5000/ciclo?page=${page}&pageSize=${pageSize}`, {
         credentials: "include",
       });
-
-      const data: { posts: PostData[] } = await res.json();
+      const data = await res.json();
+      console.log("✅ Ciclo posts:", data);
 
       if (data.posts.length < pageSize) setHasMore(false);
 
       setPosts((prev) => {
         const newPosts = data.posts.filter(
-          (p) => !prev.some((existing) => existing.id === p.id)
+            (p: PostData) => !prev.some((existing) => existing.id === p.id)
         );
         return [...prev, ...newPosts];
       });
 
       setPage((prev) => prev + 1);
     } catch (err) {
-      console.error("Erro ao buscar posts:", err);
+      console.error("Erro ao buscar posts do Ciclo:", err);
     } finally {
       setLoading(false);
     }
@@ -85,9 +83,11 @@ const InfinitePosts: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      <CreatePost />
+      <CreateCicloPost />
+
+      {/* Teste: se nada mostrar, teste com <pre>{JSON.stringify(posts)}</pre> */}
       {posts.map((post) => (
-        <Post key={post.id} {...post} />
+        <CicloPostCard key={post.id} {...post} />
       ))}
 
       {loading && (
@@ -111,4 +111,4 @@ const InfinitePosts: React.FC = () => {
   );
 };
 
-export default InfinitePosts;
+export default CicloInfinitePosts;
