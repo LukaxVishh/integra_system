@@ -179,5 +179,128 @@ namespace backend.Controllers
 
             return Ok(new { message = "CicloPost removido com sucesso." });
         }
+
+        [HttpGet("orientador/buttons")]
+        public async Task<IActionResult> GetButtons()
+        {
+            var buttons = await _context.CicloOrientadorButtons
+                .OrderBy(b => b.Order)
+                .ToListAsync();
+            return Ok(buttons);
+        }
+
+        [HttpPost("orientador/buttons")]
+        public async Task<IActionResult> CreateButton([FromBody] CicloOrientadorButtonDto dto)
+        {
+            if (!User.HasClaim("CcCreateOri", "true") && !User.HasClaim("CanManageAll", "true"))
+                return Forbid();
+
+            var maxOrder = await _context.CicloOrientadorButtons.MaxAsync(b => (int?)b.Order) ?? 0;
+
+            var button = new CicloOrientadorButton
+            {
+                Text = dto.Text,
+                Color = dto.Color,
+                Order = maxOrder + 1
+            };
+
+            _context.CicloOrientadorButtons.Add(button);
+            await _context.SaveChangesAsync();
+
+            return Ok(button);
+        }
+
+        [HttpPut("orientador/buttons/{id}")]
+        public async Task<IActionResult> UpdateButton(int id, [FromBody] CicloOrientadorButtonUpdateDto dto)
+        {
+            if (!User.HasClaim("CcUpdateOri", "true") && !User.HasClaim("CanManageAll", "true"))
+                return Forbid();
+
+            var button = await _context.CicloOrientadorButtons.FindAsync(id);
+            if (button == null) return NotFound();
+
+            button.Text = dto.Text;
+            button.Color = dto.Color;
+            button.Order = dto.Order;
+
+            await _context.SaveChangesAsync();
+            return Ok(button);
+        }
+
+        [HttpDelete("orientador/buttons/{id}")]
+        public async Task<IActionResult> DeleteButton(int id)
+        {
+            if (!User.HasClaim("CcDeleteOri", "true") && !User.HasClaim("CanManageAll", "true"))
+                return Forbid();
+
+            var button = await _context.CicloOrientadorButtons.FindAsync(id);
+            if (button == null) return NotFound();
+
+            _context.CicloOrientadorButtons.Remove(button);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost("orientador/buttons/reorder")]
+        public async Task<IActionResult> Reorder([FromBody] List<int> orderedIds)
+        {
+            if (!User.HasClaim("CcUpdateOri", "true") && !User.HasClaim("CanManageAll", "true"))
+                return Forbid();
+
+            var buttons = await _context.CicloOrientadorButtons.ToListAsync();
+
+            for (int i = 0; i < orderedIds.Count; i++)
+            {
+                var button = buttons.FirstOrDefault(b => b.Id == orderedIds[i]);
+                if (button != null)
+                {
+                    button.Order = i + 1;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpGet("orientador/buttons/{buttonId}/table")]
+        public async Task<IActionResult> GetTable(int buttonId)
+        {
+            var table = await _context.CicloOrientadorTables
+                .FirstOrDefaultAsync(t => t.ButtonId == buttonId);
+
+            if (table == null)
+                return NotFound();
+
+            return Ok(table);
+        }
+
+        [HttpPost("orientador/buttons/{buttonId}/table")]
+        public async Task<IActionResult> SaveOrUpdateTable(int buttonId, [FromBody] CicloOrientadorTableDto dto)
+        {
+            if (!User.HasClaim("CcCreateOri", "true") &&
+                !User.HasClaim("CcUpdateOri", "true") &&
+                !User.HasClaim("CanManageAll", "true"))
+                return Forbid();
+
+            var existing = await _context.CicloOrientadorTables
+                .FirstOrDefaultAsync(t => t.ButtonId == buttonId);
+
+            if (existing == null)
+            {
+                var newTable = new CicloOrientadorTable
+                {
+                    ButtonId = buttonId,
+                    DataJson = dto.DataJson
+                };
+                _context.CicloOrientadorTables.Add(newTable);
+            }
+            else
+            {
+                existing.DataJson = dto.DataJson;
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
     }
 }

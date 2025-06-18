@@ -20,6 +20,8 @@ namespace backend.Context
         public DbSet<Comment> Comments { get; set; }
         public DbSet<AvailableClaim> AvailableClaims { get; set; } = null!;
         public DbSet<CicloPost> CicloPosts { get; set; }
+        public DbSet<CicloOrientadorButton> CicloOrientadorButtons { get; set; }
+        public DbSet<CicloOrientadorTable> CicloOrientadorTables { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
