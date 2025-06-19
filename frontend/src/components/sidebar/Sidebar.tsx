@@ -23,6 +23,15 @@ const Sidebar: React.FC = () => {
         <li>
           <button
             className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
+            onClick={() => console.log("Controles Internos")}
+          >
+            <CheckCircleIcon className="w-5 h-5" />
+            Controles Internos
+          </button>
+        </li>
+        <li>
+          <button
+            className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
             onClick={() => console.log("Negócios")}
           >
             <ArrowTrendingUpIcon className="w-5 h-5" />
@@ -32,10 +41,28 @@ const Sidebar: React.FC = () => {
         <li>
           <button
             className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
+            onClick={() => console.log("Operações Administrativas")}
+          >
+            <CheckCircleIcon className="w-5 h-5" />
+            Operações Administrativas
+          </button>
+        </li>
+        <li>
+          <button
+            className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
             onClick={() => console.log("Processos de Qualidade")}
           >
             <CheckCircleIcon className="w-5 h-5" />
             Processos de Qualidade
+          </button>
+        </li>
+        <li>
+          <button
+            className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
+            onClick={() => console.log("Serviços Compartilhados")}
+          >
+            <CheckCircleIcon className="w-5 h-5" />
+            Serviços Compartilhados
           </button>
         </li>
       </ul>

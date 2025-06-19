@@ -201,6 +201,7 @@ namespace backend.Controllers
             {
                 Text = dto.Text,
                 Color = dto.Color,
+                TextColor = dto.TextColor,
                 Order = maxOrder + 1
             };
 
@@ -221,6 +222,7 @@ namespace backend.Controllers
 
             button.Text = dto.Text;
             button.Color = dto.Color;
+            button.TextColor = dto.TextColor;
             button.Order = dto.Order;
 
             await _context.SaveChangesAsync();
