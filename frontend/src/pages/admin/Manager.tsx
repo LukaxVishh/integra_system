@@ -22,7 +22,7 @@ const Manager: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [activeTab, setActiveTab] = useState<"usuarios" | "permissoes" | null>(null);
+  const [activeTab, setActiveTab] = useState<"usuarios" | "permissoes">("usuarios");
 
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleClaims, setNewRoleClaims] = useState<string[]>([]);

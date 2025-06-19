@@ -7,10 +7,10 @@ interface SortableButtonProps {
   text: string;
   color: string;
   textColor: string;
-  bold: boolean;
+  bold: boolean; // pode remover no futuro se quiser, não é mais usado aqui
   onEdit: (id: number, newData: { text: string; color: string; textColor: string; bold: boolean }) => void;
   onDelete: (id: number) => void;
-  onOpenTable: (id: number) => void; // ✅ NOVO
+  onOpenTable: (id: number) => void;
   canManage: boolean;
 }
 
@@ -19,12 +19,13 @@ const SortableButton: React.FC<SortableButtonProps> = ({
   text,
   color,
   textColor,
-  bold,
   onEdit,
   onDelete,
   onOpenTable,
   canManage,
 }) => {
+
+  console.log(`Botão ${id} - cor do texto recebida:`, textColor);
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
   const [showEdit, setShowEdit] = useState(false);
@@ -33,14 +34,15 @@ const SortableButton: React.FC<SortableButtonProps> = ({
   const [editText, setEditText] = useState(text);
   const [editColor, setEditColor] = useState(color);
   const [editTextColor, setEditTextColor] = useState(textColor);
-  const [editBold, setEditBold] = useState(bold);
+  // Não precisa mais usar editBold para o display, mas pode manter para compat
 
+  // Força sempre bold e aplica a cor do texto
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     backgroundColor: color,
     color: textColor,
-    fontWeight: bold ? "bold" : "normal",
+    fontWeight: "bold" as "bold",
     textAlign: "center" as const,
   };
 
@@ -51,7 +53,7 @@ const SortableButton: React.FC<SortableButtonProps> = ({
         style={style}
         className="p-4 rounded shadow flex justify-between items-center cursor-default"
       >
-        <span className="flex-1 text-center">{text}</span>
+        <span className="flex-1 text-center" style={{ color: textColor, fontWeight: "bold" }}>{text}</span>
 
         <div className="flex items-center space-x-2">
           <button
@@ -110,16 +112,13 @@ const SortableButton: React.FC<SortableButtonProps> = ({
                   <label className="block text-sm mb-1">Cor Texto</label>
                   <input type="color" value={editTextColor} onChange={(e) => setEditTextColor(e.target.value)} />
                 </div>
-                <div className="flex items-center gap-2">
-                  <label className="block text-sm">Negrito</label>
-                  <input type="checkbox" checked={editBold} onChange={(e) => setEditBold(e.target.checked)} />
-                </div>
               </div>
             </div>
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => {
-                  onEdit(id, { text: editText, color: editColor, textColor: editTextColor, bold: editBold });
+                  // Salva SEMPRE como bold
+                  onEdit(id, { text: editText, color: editColor, textColor: editTextColor, bold: true });
                   setShowEdit(false);
                 }}
                 className="px-4 py-2 bg-[#0F9D58] text-white rounded hover:bg-[#0C7A43]"
