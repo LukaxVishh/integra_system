@@ -8,10 +8,17 @@ interface SortableButtonProps {
   color: string;
   textColor: string;
   bold: boolean;
-  onEdit: (id: number, newData: { text: string; color: string; textColor: string; bold: boolean }) => void;
+  onEdit: (id: number, newData: {
+    text: string;
+    color: string;
+    textColor: string;
+    bold: boolean;
+    externalLink?: string;
+  }) => void;
   onDelete: (id: number) => void;
   onOpenTable: (id: number) => void;
   canManage: boolean;
+  externalLink?: string;
 }
 
 const SortableButton: React.FC<SortableButtonProps> = ({
@@ -19,18 +26,25 @@ const SortableButton: React.FC<SortableButtonProps> = ({
   text,
   color,
   textColor,
+  bold,
   onEdit,
   onDelete,
   onOpenTable,
   canManage,
+  externalLink: externalLinkProp,
 }) => {
+
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
 
   const [showEdit, setShowEdit] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showLink, setShowLink] = useState(false);
+
   const [editText, setEditText] = useState(text);
   const [editColor, setEditColor] = useState(color);
   const [editTextColor, setEditTextColor] = useState(textColor);
+  const [editBold, setEditBold] = useState(bold);
+  const [link, setLink] = useState(externalLinkProp || "");
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [animateState, setAnimateState] = useState<"entering" | "exiting" | null>(null);
@@ -65,7 +79,7 @@ const SortableButton: React.FC<SortableButtonProps> = ({
     transition,
     backgroundColor: color,
     color: textColor,
-    fontWeight: "bold" as "bold",
+    fontWeight: bold ? "bold" : "normal",
     textAlign: "center" as const,
   };
 
@@ -90,6 +104,15 @@ const SortableButton: React.FC<SortableButtonProps> = ({
     </svg>
   );
 
+  const svgLink = (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      className="text-gray-600">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </svg>
+  );
+
   const svgChevronDown = (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
@@ -108,12 +131,14 @@ const SortableButton: React.FC<SortableButtonProps> = ({
         <span className="flex-1 text-center">{text}</span>
 
         <div className="flex items-center space-x-2">
-          {!canManage && (
-            <button
-              onClick={() => onOpenTable(id)}
-              className="ml-2 p-1 hover:bg-green-50 rounded transition"
-              title="Abrir Tabela"
-            >
+          {!canManage && link && (
+            <a href={link} target="_blank" rel="noopener noreferrer" className="ml-2 p-1 hover:bg-purple-50 rounded transition" title="Abrir Link">
+              {svgLink}
+            </a>
+          )}
+
+          {!canManage && !link && (
+            <button onClick={() => onOpenTable(id)} className="ml-2 p-1 hover:bg-green-50 rounded transition" title="Abrir Tabela">
               {svgSheet}
             </button>
           )}
@@ -135,6 +160,7 @@ const SortableButton: React.FC<SortableButtonProps> = ({
                     animateState === "exiting" ? "animate-dropdown-exit" : ""
                   }`}>
                     <button onClick={() => { toggleMenu(); onOpenTable(id); }} className="p-2 hover:bg-green-50 rounded transition">{svgSheet}</button>
+                    <button onClick={() => { toggleMenu(); setShowLink(true); }} className="p-2 hover:bg-purple-50 rounded transition">{svgLink}</button>
                     <button onClick={() => { toggleMenu(); setShowEdit(true); }} className="p-2 hover:bg-blue-50 rounded transition">{svgPencil}</button>
                     <button onClick={() => { toggleMenu(); setShowDelete(true); }} className="p-2 hover:bg-red-50 rounded transition">
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -149,39 +175,111 @@ const SortableButton: React.FC<SortableButtonProps> = ({
         </div>
       </div>
 
-      {showEdit && (
+      {/* Modais de link, edição e exclusão */}
+      {showLink && (
         <div className="fixed inset-0 flex items-center justify-center z-50 animate-dropdown-enter">
           <div className="bg-white p-6 rounded shadow border-2 border-[#0F9D58] w-full max-w-md">
-            <h2 className="text-lg font-semibold text-[#0F9D58] mb-4">Editar Botão</h2>
-            <div className="space-y-4">
-              <div className="flex items-center bg-white rounded-lg px-3 py-2 border border-[#E6F4EA] gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M14 16.5a.5.5 0 0 0 .5.5h.5a2 2 0 0 1 0 4H9a2 2 0 0 1 0-4h.5a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5V8a2 2 0 0 1-4 0V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-4 0v-.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5Z"/></svg>
-                <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)} placeholder="Texto" className="outline-none border-none bg-transparent w-24 text-[#111]" />
-              </div>
-              <div className="flex gap-4">
-                <div className="flex items-center bg-white rounded-lg px-3 py-2 border border-[#E6F4EA] gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect width="16" height="6" x="2" y="2" rx="2"/><path d="M10 16v-2a2 2 0 0 1 2-2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect width="4" height="6" x="8" y="16" rx="1"/></svg>
-                  <label className="relative flex items-center">
-                    <input type="color" value={editColor} onChange={(e) => setEditColor(e.target.value)} className="w-6 h-6 opacity-0 absolute cursor-pointer" />
-                    <span className="inline-block w-6 h-6 rounded-full border border-[#E6F4EA]" style={{ background: editColor }}></span>
-                  </label>
-                </div>
-                <div className="flex items-center bg-white rounded-lg px-3 py-2 border border-[#E6F4EA] gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="m6 16 6-12 6 12"/><path d="M8 12h8"/></svg>
-                  <label className="relative flex items-center">
-                    <input type="color" value={editTextColor} onChange={(e) => setEditTextColor(e.target.value)} className="w-6 h-6 opacity-0 absolute cursor-pointer" />
-                    <span className="inline-block w-6 h-6 rounded-full border border-[#E6F4EA]" style={{ background: editTextColor }}></span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-4 mt-6">
-              <button onClick={() => { onEdit(id, { text: editText, color: editColor, textColor: editTextColor, bold: true }); setShowEdit(false); }} className="px-4 py-2 bg-[#0F9D58] text-white rounded hover:bg-[#0C7A43]">Salvar</button>
-              <button onClick={() => setShowEdit(false)} className="px-4 py-2 border border-[#E6F4EA] text-[#0F9D58] rounded hover:bg-[#E6F4EA]">Cancelar</button>
+            <h2 className="text-lg font-semibold text-[#0F9D58] mb-4">Configurar Link Externo</h2>
+            <input type="url" placeholder="https://..." value={link} onChange={e => setLink(e.target.value)} className="border border-[#E6F4EA] px-3 py-2 rounded w-full mb-4" />
+            <div className="flex justify-end gap-4">
+              <button onClick={() => { onEdit(id, { text, color, textColor, bold, externalLink: link }); setShowLink(false); }} className="px-4 py-2 bg-[#0F9D58] text-white rounded hover:bg-[#0C7A43]">Salvar</button>
+              <button onClick={() => setShowLink(false)} className="px-4 py-2 border border-[#E6F4EA] text-[#0F9D58] rounded hover:bg-[#E6F4EA]">Cancelar</button>
             </div>
           </div>
         </div>
       )}
+
+      {showEdit && (
+  <div className="fixed inset-0 flex items-center justify-center z-50 animate-dropdown-enter">
+    <div className="bg-white p-6 rounded shadow border-2 border-[#0F9D58] w-full max-w-md">
+      <h2 className="text-lg font-semibold text-[#0F9D58] mb-4">Editar Botão</h2>
+      <div className="space-y-4">
+
+        {/* Campo de texto puro */}
+        <div className="flex items-center bg-white rounded-lg px-3 py-2 border border-[#E6F4EA] gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+            <path d="M14 16.5a.5.5 0 0 0 .5.5h.5a2 2 0 0 1 0 4H9a2 2 0 0 1 0-4h.5a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5V8a2 2 0 0 1-4 0V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-4 0v-.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5Z" />
+          </svg>
+          <input
+            type="text"
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            placeholder="Texto"
+            className="outline-none border-none bg-transparent w-40 text-[#111]"
+          />
+        </div>
+
+        {/* Linha de botões de opções */}
+        <div className="flex gap-4 flex-wrap">
+          {/* Cor de fundo */}
+          <div className="flex items-center bg-white rounded-lg px-3 py-2 border border-[#E6F4EA] gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <rect width="16" height="6" x="2" y="2" rx="2"/>
+              <path d="M10 16v-2a2 2 0 0 1 2-2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
+              <rect width="4" height="6" x="8" y="16" rx="1"/>
+            </svg>
+            <label className="relative flex items-center">
+              <input type="color" value={editColor} onChange={(e) => setEditColor(e.target.value)} className="w-6 h-6 opacity-0 absolute cursor-pointer" />
+              <span className="inline-block w-6 h-6 rounded-full border border-[#E6F4EA]" style={{ background: editColor }}></span>
+            </label>
+          </div>
+
+          {/* Cor do texto */}
+          <div className="flex items-center bg-white rounded-lg px-3 py-2 border border-[#E6F4EA] gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="#0F9D58" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M4 20h16"/>
+              <path d="m6 16 6-12 6 12"/>
+              <path d="M8 12h8"/>
+            </svg>
+            <label className="relative flex items-center">
+              <input type="color" value={editTextColor} onChange={(e) => setEditTextColor(e.target.value)} className="w-6 h-6 opacity-0 absolute cursor-pointer" />
+              <span className="inline-block w-6 h-6 rounded-full border border-[#E6F4EA]" style={{ background: editTextColor }}></span>
+            </label>
+          </div>
+
+          {/* Botão Bold fora da caixa de texto */}
+          <div
+            onClick={() => setEditBold(!editBold)}
+            className={`flex items-center rounded-lg px-3 py-2 border border-[#E6F4EA] cursor-pointer transition ${
+              editBold ? "bg-[#0F9D58] text-white" : "bg-white text-[#0F9D58]"
+            }`}
+            title="Negrito"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8" />
+            </svg>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Ações */}
+      <div className="flex justify-end gap-4 mt-6">
+        <button
+          onClick={() => {
+            onEdit(id, {
+              text: editText,
+              color: editColor,
+              textColor: editTextColor,
+              bold: editBold
+            });
+            setShowEdit(false);
+          }}
+          className="px-4 py-2 bg-[#0F9D58] text-white rounded hover:bg-[#0C7A43]"
+        >
+          Salvar
+        </button>
+        <button
+          onClick={() => setShowEdit(false)}
+          className="px-4 py-2 border border-[#E6F4EA] text-[#0F9D58] rounded hover:bg-[#E6F4EA]"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {showDelete && (
         <div className="fixed inset-0 flex items-center justify-center z-50 animate-dropdown-enter">
