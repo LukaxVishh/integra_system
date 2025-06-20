@@ -17,7 +17,7 @@ interface ColaboradorCardProps {
   historico: string[];
   canEdit: boolean;
   onEdit: (id: string) => void;
-  showTooltip?: boolean; // ✅ NOVO: controle de hover vindo do Node
+  showTooltip?: boolean;
 }
 
 const ColaboradorCard: React.FC<ColaboradorCardProps> = ({
@@ -29,7 +29,7 @@ const ColaboradorCard: React.FC<ColaboradorCardProps> = ({
   historico,
   canEdit,
   onEdit,
-  showTooltip, // ✅ NOVO
+  showTooltip,
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [openPosition, setOpenPosition] = useState<"top" | "bottom">("top");
@@ -39,7 +39,8 @@ const ColaboradorCard: React.FC<ColaboradorCardProps> = ({
   const isHovering = showTooltip ?? internalHover;
 
   useEffect(() => {
-    if (!cardRef.current) return;
+    if (!cardRef.current || !isHovering) return;
+
     const rect = cardRef.current.getBoundingClientRect();
     const spaceAbove = rect.top;
     const spaceBelow = window.innerHeight - rect.bottom;
@@ -84,6 +85,7 @@ const ColaboradorCard: React.FC<ColaboradorCardProps> = ({
         {canEdit && (
           <button
             onClick={() => onEdit(id)}
+            aria-label={`Editar ${nome}`}
             className="ml-2 text-gray-500 hover:text-gray-800 flex-shrink-0"
           >
             <svg
@@ -108,9 +110,9 @@ const ColaboradorCard: React.FC<ColaboradorCardProps> = ({
       {isHovering && tooltipPos &&
         createPortal(
           <div
-            className="fixed z-[9999] w-60 bg-white border border-[#E6F4EA] rounded-lg shadow-xl p-4 text-left pointer-events-none transition-opacity duration-200"
+            className="fixed z-[9999] w-60 max-w-[90vw] bg-white border border-[#E6F4EA] rounded-lg shadow-xl p-4 text-left pointer-events-none transition-opacity duration-200"
             style={{
-              left: tooltipPos.left,
+              left: Math.min(Math.max(tooltipPos.left, 100), window.innerWidth - 100),
               top: openPosition === "top" ? tooltipPos.top - 8 : tooltipPos.top + 8,
               transform: `translate(-50%, ${openPosition === "top" ? "-100%" : "0"})`,
             }}
