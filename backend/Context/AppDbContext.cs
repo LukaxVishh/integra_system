@@ -22,7 +22,7 @@ namespace backend.Context
         public DbSet<CicloPost> CicloPosts { get; set; }
         public DbSet<CicloOrientadorButton> CicloOrientadorButtons { get; set; }
         public DbSet<CicloOrientadorTable> CicloOrientadorTables { get; set; }
-
+        public DbSet<CicloColaboradorAtividade> CicloColaboradorAtividades { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

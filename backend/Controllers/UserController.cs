@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Formats.Jpeg;
 
 namespace backend.Controllers
 {
@@ -337,6 +340,57 @@ namespace backend.Controllers
             }
 
             return Ok(new { message = "Claims sincronizadas com base nas roles atuais!" });
+        }
+
+        [HttpPost("{id}/photo")]
+        public async Task<IActionResult> UploadUserPhoto(string id, [FromForm] UploadPhotoDto dto)
+        {
+            if (dto.File == null || dto.File.Length == 0)
+                return BadRequest("Nenhum arquivo enviado.");
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var canManageAll = userRoles.Contains("Admin");
+            var isGerenteCA = userRoles.Contains("Gerente CA");
+            var isGerenteUA = userRoles.Contains("Gerente UA");
+            var isSelf = user.Id == id;
+
+            if (!canManageAll && !isGerenteCA && !isGerenteUA && !isSelf)
+                return Forbid();
+
+            var targetUser = await _userManager.FindByIdAsync(id);
+            if (targetUser == null)
+                return NotFound("Usuário não encontrado.");
+
+            var colaborador = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == targetUser.Email.ToLower());
+
+            if (colaborador == null)
+                return NotFound("Colaborador não encontrado para o usuário.");
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}.jpg";
+            var uploadPath = Path.Combine(uploadsFolder, fileName);
+
+            using (var image = SixLabors.ImageSharp.Image.Load(dto.File.OpenReadStream()))
+            {
+                image.Mutate(x => x.Resize(new SixLabors.ImageSharp.Processing.ResizeOptions
+                {
+                    Mode = SixLabors.ImageSharp.Processing.ResizeMode.Crop,
+                    Size = new SixLabors.ImageSharp.Size(400, 400)
+                }));
+                image.SaveAsJpeg(uploadPath, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 80 });
+            }
+
+            colaborador.PhotoUrl = $"uploads/{fileName}";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { photoUrl = colaborador.PhotoUrl });
         }
     }
 }
