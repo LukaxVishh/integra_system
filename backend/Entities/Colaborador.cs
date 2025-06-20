@@ -16,6 +16,7 @@ namespace backend.Entities
         public string Cargo { get; set; }
         public int Centro_de_Custo { get; set; }
         public string SupervisorId { get; set; }
+        public string PhotoUrl { get; set; } = string.Empty;
 
     }
 }

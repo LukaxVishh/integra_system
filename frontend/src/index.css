@@ -24,3 +24,73 @@
 .animate-slidefade {
   animation: slidefade 0.5s ease-out;
 }
+
+/* dropdown + popup */
+.animate-dropdown-enter {
+  animation: dropdownEnter 0.22s ease forwards;
+}
+.animate-dropdown-exit {
+  animation: dropdownExit 0.2s ease forwards;
+}
+@keyframes dropdownEnter {
+  from { opacity: 0; transform: translateY(12px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes dropdownExit {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(12px) scale(0.95); }
+}
+
+
+.tree-container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 40px;
+}
+
+.tree-root-wrapper {
+  position: relative;
+}
+
+.tree-root-line {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: 40px;
+  height: 2px;
+  background: #16a34a;
+}
+
+.tree-trunk {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.tree-trunk::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #16a34a;
+}
+
+.tree-branch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-left: 40px; /* Igual root-line width */
+}
+
+.tree-branch-line {
+  position: absolute;
+  left: -40px;
+  top: 50%;
+  width: 40px;
+  height: 2px;
+  background: #16a34a;
+}

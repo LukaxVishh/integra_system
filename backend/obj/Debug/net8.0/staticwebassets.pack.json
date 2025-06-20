@@ -57,6 +57,10 @@
       "PackagePath": "staticwebassets\\uploads\\e3edc8c2-9dfc-4521-859e-eaf59b1c0ffa.jpg"
     },
     {
+      "Id": "C:\\Users\\kinha\\integra_system\\backend\\wwwroot\\uploads\\e6d0c6cc-1ce8-4de6-bc12-963e5681a124.jpg",
+      "PackagePath": "staticwebassets\\uploads\\e6d0c6cc-1ce8-4de6-bc12-963e5681a124.jpg"
+    },
+    {
       "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.backend.Microsoft.AspNetCore.StaticWebAssets.props",
       "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
     },

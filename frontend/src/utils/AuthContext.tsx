@@ -15,6 +15,8 @@ interface AuthContextProps {
   setRoles: React.Dispatch<React.SetStateAction<string[]>>;
   currentUser: UserInfo | null;
   setCurrentUser: React.Dispatch<React.SetStateAction<UserInfo | null>>;
+  claims: string[]; // ✅ adiciona aqui!
+  setClaims: React.Dispatch<React.SetStateAction<string[]>>; // ✅ para controle reativo
   isLoading: boolean;
   resetLoading: () => void;
   isLoggingOut: boolean;
@@ -30,6 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [claims, setClaims] = useState<string[]>([]);
 
   const fetchUserInfoAndRoles = async () => {
     try {
@@ -41,8 +44,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (userResponse.ok) {
         const userData = await userResponse.json();
-        console.log("✅ Dados do usuário:", userData);
+        console.log("✅ Dados do usuário:", userData, claims);
         setCurrentUser(userData);
+        setClaims(userData.claims || []);
       } else {
         console.error("❌ Erro ao buscar info do usuário");
       }
@@ -77,12 +81,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchUserInfoAndRoles();
   };
 
-  // ✅ Novo helper: verifica claim única
+  // ✅ Helpers
   const hasClaim = (claim: string) => {
     return currentUser?.claims?.includes(claim) || false;
   };
 
-  // ✅ Novo helper: verifica se o usuário tem QUALQUER claim da lista
   const hasAnyClaim = (claims: string[]) => {
     return claims.some((claim) => hasClaim(claim));
   };
@@ -94,8 +97,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRoles,
         currentUser,
         setCurrentUser,
+        claims: currentUser?.claims || [], // ✅ garante que sempre exista claims
         isLoading,
         resetLoading,
+        setClaims,
         isLoggingOut,
         setIsLoggingOut,
         hasClaim,

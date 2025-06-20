@@ -5,6 +5,7 @@ import CicloInfinitePosts from "../../components/ciclo_credito/informativos/Cicl
 import OrientadorGrid from "../../components/ciclo_credito/orientador/OrientadorGrid";
 import OrientadorTableEditor from "../../components/ciclo_credito/orientador/OrientadorTableEditor";
 import CicloSidebar from "../../components/ciclo_credito/CicloSidebar";
+import CicloColaboradores from "../../components/ciclo_credito/colaboradores/CicloColaboradores"
 
 const CicloCredito: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"informativos" | "orientador" | "colaboradores">("informativos");
@@ -43,9 +44,7 @@ const CicloCredito: React.FC = () => {
           {activeTab === "colaboradores" && (
             <>
               <h2 className="text-xl font-bold text-[#0F9D58] mb-4">Colaboradores</h2>
-              <p className="text-gray-700">
-                Aqui vai o conteúdo relacionado aos colaboradores envolvidos no Ciclo de Crédito.
-              </p>
+              <CicloColaboradores />
             </>
           )}
 

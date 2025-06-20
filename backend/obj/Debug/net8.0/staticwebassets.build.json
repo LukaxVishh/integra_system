@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "xZG76UNBbYlhGP9gWLK4cVyX8EH1nhq9UY6PJp2KH2g=",
+  "Hash": "KxeUQRMTXt6z9P2hx0cwJD+Od9+N/reQObZIiSViZiU=",
   "Source": "backend",
   "BasePath": "_content/backend",
   "Mode": "Default",
@@ -281,6 +281,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\uploads\\e3edc8c2-9dfc-4521-859e-eaf59b1c0ffa.jpg"
+    },
+    {
+      "Identity": "C:\\Users\\kinha\\integra_system\\backend\\wwwroot\\uploads\\e6d0c6cc-1ce8-4de6-bc12-963e5681a124.jpg",
+      "SourceId": "backend",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\kinha\\integra_system\\backend\\wwwroot\\",
+      "BasePath": "_content/backend",
+      "RelativePath": "uploads/e6d0c6cc-1ce8-4de6-bc12-963e5681a124.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\e6d0c6cc-1ce8-4de6-bc12-963e5681a124.jpg"
     }
   ]
 }

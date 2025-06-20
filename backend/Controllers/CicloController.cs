@@ -201,6 +201,8 @@ namespace backend.Controllers
             {
                 Text = dto.Text,
                 Color = dto.Color,
+                Bold = dto.Bold,
+                TextColor = dto.TextColor,
                 Order = maxOrder + 1
             };
 
@@ -221,6 +223,9 @@ namespace backend.Controllers
 
             button.Text = dto.Text;
             button.Color = dto.Color;
+            button.TextColor = dto.TextColor;
+            button.Bold = dto.Bold;
+            button.ExternalLink = dto.ExternalLink;
             button.Order = dto.Order;
 
             await _context.SaveChangesAsync();
@@ -301,6 +306,177 @@ namespace backend.Controllers
 
             await _context.SaveChangesAsync();
             return Ok();
+        }
+
+        [HttpGet("organograma")]
+        public async Task<IActionResult> GetCicloOrganograma()
+        {
+            var allUsers = await _userManager.Users.ToListAsync();
+            var gerentesCiclo = new List<object>();
+
+            foreach (var user in allUsers)
+            {
+                var userClaims = await _userManager.GetClaimsAsync(user);
+
+                if (userClaims.Any(c => c.Type == "GerenteCiclo" && c.Value == "true"))
+                {
+                    var colaborador = await _context.Colaboradores
+                        .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
+
+                    // ⚡ Gerente: atividades, tags, historico
+                    var gerenteAtividades = await _context.CicloColaboradorAtividades
+                        .Where(a => a.ColaboradorEmail.ToLower() == colaborador.Email.ToLower())
+                        .OrderByDescending(a => a.DataInicio)
+                        .ToListAsync();
+
+                    var gerenteTags = gerenteAtividades
+                        .Where(a => a.DataFim == null)
+                        .Select(a => new
+                        {
+                            id = a.Id,
+                            name = a.NomeTag,
+                            color = a.Cor,
+                            descricao = a.Descricao
+                        })
+                        .ToList();
+
+                    var gerenteHistorico = gerenteAtividades
+                        .Select(a => $"{a.NomeTag} — {a.Descricao} ({a.DataInicio:dd/MM/yyyy} até {(a.DataFim?.ToString("dd/MM/yyyy") ?? "Ativo")})")
+                        .ToList();
+
+                    // ⚡ Subordinados: cada um com atividades, tags, historico
+                    var rawSubordinados = await _context.Colaboradores
+                        .Where(c => c.SupervisorId == user.Id)
+                        .ToListAsync();
+
+                    var subordinados = rawSubordinados
+                        .Select(c =>
+                        {
+                            var subUser = allUsers.FirstOrDefault(u => u.Email.ToLower() == c.Email.ToLower());
+                            var atividades = _context.CicloColaboradorAtividades
+                                .Where(a => a.ColaboradorEmail.ToLower() == c.Email.ToLower())
+                                .OrderByDescending(a => a.DataInicio)
+                                .ToList();
+
+                            var tags = atividades
+                                .Where(a => a.DataFim == null)
+                                .Select(a => new
+                                {
+                                    id = a.Id,
+                                    name = a.NomeTag,
+                                    color = a.Cor,
+                                    descricao = a.Descricao
+                                })
+                                .ToList();
+
+                            var historico = atividades
+                                .Select(a => $"{a.NomeTag} — {a.Descricao} ({a.DataInicio:dd/MM/yyyy} até {(a.DataFim?.ToString("dd/MM/yyyy") ?? "Ativo")})")
+                                .ToList();
+
+                            return new
+                            {
+                                id = subUser?.Id,
+                                nome = c.Nome,
+                                cargo = c.Cargo,
+                                email = c.Email,
+                                photoUrl = c.PhotoUrl,
+                                tags,
+                                historico
+                            };
+                        })
+                        .ToList();
+
+                    gerentesCiclo.Add(new
+                    {
+                        id = user.Id,
+                        nome = colaborador?.Nome ?? user.UserName,
+                        cargo = colaborador?.Cargo ?? "Não informado",
+                        email = user.Email,
+                        photoUrl = colaborador?.PhotoUrl,
+                        tags = gerenteTags,
+                        historico = gerenteHistorico,
+                        subordinados
+                    });
+                }
+            }
+
+            return Ok(gerentesCiclo);
+        }
+
+
+        [HttpPost("colaboradores/atividades")]
+        public async Task<IActionResult> CriarAtividade([FromBody] CicloColaboradorAtividade dto)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var hasPower = User.HasClaim("GerenteCiclo", "true") || User.HasClaim("CanManageAll", "true");
+
+            if (!hasPower && dto.ColaboradorEmail.ToLower() != user.Email.ToLower())
+                return Forbid();
+
+            dto.DataInicio = DateTime.UtcNow;
+            dto.DataFim = null;
+
+            _context.CicloColaboradorAtividades.Add(dto);
+            await _context.SaveChangesAsync();
+
+            return Ok(dto);
+        }
+
+        [HttpPut("colaboradores/atividades/{id}")]
+        public async Task<IActionResult> AtualizarAtividade(int id, [FromBody] CicloColaboradorAtividade update)
+        {
+            var atividade = await _context.CicloColaboradorAtividades.FindAsync(id);
+            if (atividade == null) return NotFound();
+
+            var user = await _userManager.GetUserAsync(User);
+            var hasPower = User.HasClaim("GerenteCiclo", "true") || User.HasClaim("CanManageAll", "true");
+            if (!hasPower && atividade.ColaboradorEmail.ToLower() != user.Email.ToLower())
+                return Forbid();
+
+            if (!string.IsNullOrWhiteSpace(update.NomeTag))
+                atividade.NomeTag = update.NomeTag;
+
+            if (!string.IsNullOrWhiteSpace(update.Cor))
+                atividade.Cor = update.Cor;
+
+            if (!string.IsNullOrWhiteSpace(update.Descricao))
+                atividade.Descricao = update.Descricao;
+
+            if (update.DataFim.HasValue)
+                atividade.DataFim = update.DataFim;
+
+            await _context.SaveChangesAsync();
+            return Ok(atividade);
+        }
+
+        [HttpDelete("colaboradores/atividades/{id}")]
+        public async Task<IActionResult> DeletarAtividade(int id)
+        {
+            var atividade = await _context.CicloColaboradorAtividades.FindAsync(id);
+            if (atividade == null) return NotFound();
+
+            var user = await _userManager.GetUserAsync(User);
+            var hasPower = User.HasClaim("GerenteCiclo", "true") || User.HasClaim("CanManageAll", "true");
+            if (!hasPower && atividade.ColaboradorEmail.ToLower() != user.Email.ToLower())
+                return Forbid();
+
+            _context.CicloColaboradorAtividades.Remove(atividade);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Atividade removida com sucesso." });
+        }
+
+        [HttpGet("colaboradores/atividades/{email}")]
+        public async Task<IActionResult> ListarAtividadesPorColaborador(string email)
+        {
+            // Qualquer um pode ver o histórico de atividades de qualquer colaborador?
+            // Se não quiser, limite aqui!
+
+            var atividades = await _context.CicloColaboradorAtividades
+                .Where(a => a.ColaboradorEmail.ToLower() == email.ToLower())
+                .OrderByDescending(a => a.DataInicio)
+                .ToListAsync();
+
+            return Ok(atividades);
         }
     }
 }
