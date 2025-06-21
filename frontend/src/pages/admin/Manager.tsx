@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/navbar/Navbar";
 import Footer from "../../components/footer/Footer";
+import ManagerSidebar from "./ManagerSidebar"
 
 interface User {
   id: string;
@@ -241,36 +242,7 @@ const Manager: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-[#F9FAFB]">
       <Navbar />
       <main className="flex-grow px-4 pt-20 pb-4 flex flex-col md:flex-row gap-4">
-        <aside className="w-full md:w-1/5 bg-white rounded-xl shadow border border-[#E6F4EA] p-4">
-          <h2 className="text-lg font-bold text-[#0F9D58] mb-4">Menu</h2>
-          <ul className="space-y-2">
-            <li>
-              <button
-                className={`w-full px-4 py-2 rounded-md ${
-                  activeTab === "usuarios"
-                    ? "bg-[#0F9D58]"
-                    : "bg-[#128C52] hover:bg-[#0F9D58]"
-                } text-white`}
-                onClick={() => setActiveTab("usuarios")}
-              >
-                Usuários
-              </button>
-            </li>
-            <li>
-              <button
-                className={`w-full px-4 py-2 rounded-md ${
-                  activeTab === "permissoes"
-                    ? "bg-[#0F9D58]"
-                    : "bg-[#128C52] hover:bg-[#0F9D58]"
-                } text-white`}
-                onClick={() => setActiveTab("permissoes")}
-              >
-                Permissões
-              </button>
-            </li>
-          </ul>
-        </aside>
-
+        <ManagerSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         <section className="flex-1 bg-white rounded-xl shadow border border-[#E6F4EA] p-6 overflow-auto">
           {message && (
             <div className="flex justify-center mb-4">

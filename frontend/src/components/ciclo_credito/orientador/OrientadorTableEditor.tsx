@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef  } from "react";
 import { ChromePicker } from "react-color";
 import { useAuth } from "../../../utils/AuthContext";
 
@@ -6,6 +6,9 @@ interface Cell {
   value: string;
   masterCell?: [number, number];
   bgColor?: string;
+  fontColor?: string;
+  fontSize?: number;
+  bold?: boolean;
 }
 
 interface Column {
@@ -37,6 +40,11 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
   const [pickerColor, setPickerColor] = useState("#ffffff");
   const [colorTargetCells, setColorTargetCells] = useState<[number, number][]>([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showFontColorPicker, setShowFontColorPicker] = useState(false);
+  const [pickerFontColor, setPickerFontColor] = useState("#000000");
+  const [fontColorTargetCells, setFontColorTargetCells] = useState<[number, number][]>([]);
+  const [columnWidths, setColumnWidths] = useState<number[]>([]);
+  const resizingStartX = useRef(0);
 
   // Carrega tabela
   useEffect(() => {
@@ -45,7 +53,11 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
     })
       .then((res) => (res.status === 404 ? null : res.json()))
       .then((data) => {
-        if (data) setTable(JSON.parse(data.dataJson));
+        if (data) {
+        const parsed = JSON.parse(data.dataJson);
+        setTable(parsed);
+        setColumnWidths(parsed.columns.map(() => 120)); // valor inicial
+      }
       });
   }, [buttonId]);
 
@@ -56,6 +68,7 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
     const newColumns = [...table.columns, { header: newHeader, isLocked: false }];
     const newRows = table.rows.map((row) => [...row, { value: "" }]);
     setTable({ columns: newColumns, rows: newRows });
+    setColumnWidths((prev) => [...prev, 120]);
   };
 
   const addRow = () => {
@@ -72,12 +85,21 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
       header: String.fromCharCode(65 + idx),
     }));
     setTable({ columns: reordered, rows: newRows });
+    setColumnWidths((prev) => prev.filter((_, idx) => idx !== ci));
   };
 
   const removeRow = (ri: number) => {
     if (table.rows.length <= 1) return;
     const newRows = table.rows.filter((_, idx) => idx !== ri);
     setTable({ ...table, rows: newRows });
+  };
+
+  const handleResize = (ci: number, deltaX: number) => {
+    setColumnWidths((prev) => {
+      const newWidths = [...prev];
+      newWidths[ci] = Math.max(50, newWidths[ci] + deltaX);
+      return newWidths;
+    });
   };
 
   const toggleLock = (ci: number) => {
@@ -205,6 +227,26 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
     setSelectedCells([]);
   };
 
+  const openFontColorPicker = () => {
+    if (selectedCells.length === 0) return;
+    setFontColorTargetCells(selectedCells);
+    setPickerFontColor("#000000");
+    setShowFontColorPicker(true);
+  };
+
+  const applyFontColor = () => {
+    const updated = table.rows.map((row, ri) =>
+      row.map((cell, ci) => {
+        if (fontColorTargetCells.some(([r, c]) => r === ri && c === ci)) {
+          return { ...cell, fontColor: pickerFontColor };
+        }
+        return cell;
+      })
+    );
+    setTable({ ...table, rows: updated });
+    setShowFontColorPicker(false);
+    setFontColorTargetCells([]);
+  };
 
   const saveTable = async () => {
     await fetch(`http://localhost:5000/ciclo/orientador/buttons/${buttonId}/table`, {
@@ -255,6 +297,48 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
     setShowColorPicker(false);
     setColorTargetCells([]);
   };
+
+  const increaseFontSize = () => {
+    if (selectedCells.length === 0) return;
+    const updated = table.rows.map((row, ri) =>
+      row.map((cell, ci) => {
+        if (selectedCells.some(([r, c]) => r === ri && c === ci)) {
+          const current = cell.fontSize || 14;
+          return { ...cell, fontSize: current + 2 };
+        }
+        return cell;
+      })
+    );
+    setTable({ ...table, rows: updated });
+  };
+
+  const decreaseFontSize = () => {
+    if (selectedCells.length === 0) return;
+    const updated = table.rows.map((row, ri) =>
+      row.map((cell, ci) => {
+        if (selectedCells.some(([r, c]) => r === ri && c === ci)) {
+          const current = cell.fontSize || 14;
+          return { ...cell, fontSize: Math.max(8, current - 2) };
+        }
+        return cell;
+      })
+    );
+    setTable({ ...table, rows: updated });
+  };
+
+  const toggleBold = () => {
+    if (selectedCells.length === 0) return;
+    const updated = table.rows.map((row, ri) =>
+      row.map((cell, ci) => {
+        if (selectedCells.some(([r, c]) => r === ri && c === ci)) {
+          return { ...cell, bold: !cell.bold };
+        }
+        return cell;
+      })
+    );
+    setTable({ ...table, rows: updated });
+  };
+
 
   // SVGs
   const svg = {
@@ -320,6 +404,32 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
         <line x1="14" x2="14" y1="11" y2="17" />
       </svg>
     ),
+    font_up: (
+      <svg aria-label="Aumentar fonte" className="w-5 h-5 transition-all duration-200" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3.5 13h6" />
+        <path d="m2 16 4.5-9 4.5 9" />
+        <path d="M18 16V7" />
+        <path d="m14 11 4-4 4 4" />
+      </svg>
+    ),
+    font_down: (
+      <svg aria-label="Diminuir fonte" className="w-5 h-5 transition-all duration-200" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3.5 13h6" />
+        <path d="m2 16 4.5-9 4.5 9" />
+        <path d="M18 7v9" />
+        <path d="m14 12 4 4 4-4" />
+      </svg>
+    ),
+    fontColor: (
+    <svg aria-label="Alterar cor da fonte" className="w-5 h-5 transition-all duration-200" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 20h16" />
+      <path d="m6 16 6-12 6 12" />
+      <path d="M8 12h8" />
+    </svg>
+    ),
   };
 
   // --- RENDER ---
@@ -330,31 +440,73 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
       {/* TOOLBAR */}
       {canManage && (
         <div className="flex items-center gap-3 mb-3 p-2 rounded-xl bg-[#eafaf2] border border-[#d4f5df] shadow-sm">
+          {/* Adicionar coluna */}
           <button onClick={addColumn}
             className="group bg-white hover:bg-[#0F9D58]/10 rounded-full p-2 transition text-[#0F9D58] shadow hover:scale-110"
             aria-label="Adicionar coluna">
             <span className="group-hover:scale-125 group-hover:text-[#128C52]">{svg.addCol}</span>
           </button>
+
+          {/* Adicionar linha */}
           <button onClick={addRow}
             className="group bg-white hover:bg-[#0F9D58]/10 rounded-full p-2 transition text-[#0F9D58] shadow hover:scale-110"
             aria-label="Adicionar linha">
             <span className="group-hover:scale-125 group-hover:text-[#128C52]">{svg.addRow}</span>
           </button>
+
+          {/* Mesclar */}
           <button onClick={mergeSelectedCells}
             className="group bg-white hover:bg-[#0F9D58]/10 rounded-full p-2 transition text-[#0F9D58] shadow hover:scale-110"
             aria-label="Mesclar células">
             <span className="group-hover:scale-125 group-hover:text-[#128C52]">{svg.mesclar}</span>
           </button>
+
+          {/* Desmesclar */}
           <button onClick={unmergeSelectedCells}
             className="group bg-white hover:bg-[#0F9D58]/10 rounded-full p-2 transition text-[#0F9D58] shadow hover:scale-110"
             aria-label="Desmesclar células">
             <span className="group-hover:scale-125 group-hover:text-[#128C52]">{svg.desmesclar}</span>
           </button>
+
+          {/* Pintar */}
           <button onClick={openColorPicker}
             className="group bg-white hover:bg-[#0F9D58]/10 rounded-full p-2 transition text-[#0F9D58] shadow hover:scale-110"
             aria-label="Pintar células">
             <span className="group-hover:scale-125 group-hover:text-[#128C52]">{svg.pintar}</span>
           </button>
+
+          {/* Aumentar fonte */}
+          <button onClick={increaseFontSize}
+            className="group bg-white hover:bg-[#0F9D58]/10 rounded-full p-2 transition text-[#0F9D58] shadow hover:scale-110"
+            aria-label="Aumentar fonte">
+            <span className="text-base font-bold group-hover:scale-125 group-hover:text-[#128C52]">{svg.font_up}</span>
+          </button>
+
+          {/* Diminuir fonte */}
+          <button onClick={decreaseFontSize}
+            className="group bg-white hover:bg-[#0F9D58]/10 rounded-full p-2 transition text-[#0F9D58] shadow hover:scale-110"
+            aria-label="Diminuir fonte">
+            <span className="text-base font-bold group-hover:scale-125 group-hover:text-[#128C52]">{svg.font_down}</span>
+          </button>
+
+          {/* Cor da fonte */}
+          <button onClick={openFontColorPicker}
+            className="group bg-white hover:bg-[#0F9D58]/10 rounded-full p-2 transition text-[#0F9D58] shadow hover:scale-110"
+            aria-label="Alterar cor da fonte">
+            {svg.fontColor}
+          </button>
+
+
+          {/* Negrito */}
+          <button onClick={toggleBold}
+            className="group bg-white hover:bg-[#0F9D58]/10 rounded-full p-2 transition text-[#0F9D58] shadow hover:scale-110"
+            aria-label="Alternar negrito">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 group-hover:scale-125 group-hover:text-[#128C52]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path d="M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8" />
+            </svg>
+          </button>
+
+          {/* Salvar */}
           <button onClick={saveTable}
             className="group bg-white hover:bg-[#0F9D58]/10 rounded-full p-2 transition text-[#0F9D58] shadow hover:scale-110"
             aria-label="Salvar tabela">
@@ -363,15 +515,17 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
         </div>
       )}
 
+
       {/* TABELA */}
       <div className="overflow-auto border border-[#E6F4EA] shadow">
         <table className="min-w-full text-sm border-collapse">
           <thead>
             <tr>
+              <th className="bg-[#E6F4EA] px-3 py-2 text-[#128C52] font-semibold"></th>
               {table.columns.map((col, ci) => (
                 <th key={ci} className={`border px-3 py-2 bg-[#E6F4EA] relative font-semibold text-[#128C52] ${ci === 0 ? "rounded-tl-xl" : ""}
                   ${ci === table.columns.length - 1 ? "rounded-tr-xl" : ""}`}>
-                  <div className="flex items-center gap-1 justify-center">
+                  <div className="flex items-center justify-center">
                     <span>{col.header}</span>
                     {canManage && (
                       <>
@@ -393,6 +547,33 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
                         </button>
                       </>
                     )}
+                    <div
+                      onMouseDown={(e) => {
+                        resizingStartX.current = e.clientX; // inicializa o ponto de partida
+
+                        const handleMouseMove = (ev: MouseEvent) => {
+                          const delta = ev.clientX - resizingStartX.current;
+                          handleResize(ci, delta);
+                          resizingStartX.current = ev.clientX; // atualiza para próximo movimento
+                        };
+
+                        const handleMouseUp = () => {
+                          window.removeEventListener("mousemove", handleMouseMove);
+                          window.removeEventListener("mouseup", handleMouseUp);
+                        };
+
+                        window.addEventListener("mousemove", handleMouseMove);
+                        window.addEventListener("mouseup", handleMouseUp);
+                      }}
+                      style={{
+                        position: "absolute",
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: "5px",
+                        cursor: "col-resize",
+                      }}
+                    />
                   </div>
                 </th>
               ))}
@@ -401,6 +582,9 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
           <tbody>
             {table.rows.map((row, ri) => (
               <tr key={ri}>
+                <td className="bg-[#F9FAFB] text-center font-semibold text-[#128C52] border px-3 py-2">
+                  {ri + 1}
+                </td>
                 {row.map((cell, ci) => {
                 if (cell.masterCell) return null;
                 let colspan = 1;
@@ -433,8 +617,8 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
                       `}
                       style={{
                         backgroundColor: baseCell.bgColor,
-                        minWidth: 110,
-                        maxWidth: 230,
+                        minWidth: columnWidths[ci] || 120,
+                        maxWidth: columnWidths[ci] || 230,
                         wordBreak: "break-word"
                       }}
                       onClick={(e) => handleCellClick(ri, ci, e)}
@@ -447,7 +631,9 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
                           onChange={(e) => updateCell(ri, ci, e.target.value)}
                           disabled={table.columns[ci].isLocked}
                           className="w-full outline-none p-2 min-h-[36px] bg-transparent text-[#222] resize-y"
-                          style={{ wordBreak: "break-word", border: "none", boxShadow: "none" }}
+                          style={{ wordBreak: "break-word", border: "none", boxShadow: "none", 
+                                   fontSize: baseCell.fontSize ? `${baseCell.fontSize}px` : "14px",
+                                   fontWeight: baseCell.bold ? "bold" : "normal", color: baseCell.fontColor || "#222" }}
                         />
                       )}
                     </td>
@@ -508,6 +694,31 @@ const OrientadorTableEditor: React.FC<Props> = ({ buttonId, onClose }) => {
               </button>
               <button
                 onClick={() => setShowColorPicker(false)}
+                className="px-4 py-2 border border-[#E6F4EA] text-[#0F9D58] rounded hover:bg-[#E6F4EA] transition"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* PICKER DE COR DA FONTE */}
+      {showFontColorPicker && (
+        <div className="fixed inset-0 bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-xl shadow space-y-4 border border-[#0F9D58]">
+            <ChromePicker
+              color={pickerFontColor}
+              onChange={(c) => setPickerFontColor(c.hex)}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={applyFontColor}
+                className="px-4 py-2 bg-[#0F9D58] text-white rounded shadow hover:bg-[#128C52] transition"
+              >
+                Aplicar
+              </button>
+              <button
+                onClick={() => setShowFontColorPicker(false)}
                 className="px-4 py-2 border border-[#E6F4EA] text-[#0F9D58] rounded hover:bg-[#E6F4EA] transition"
               >
                 Cancelar

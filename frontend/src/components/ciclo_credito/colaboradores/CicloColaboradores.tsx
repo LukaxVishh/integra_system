@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../../utils/AuthContext";
 import ColaboradorCard from "./ColaboradorCard";
 import CicloColaboradorModal from "./CicloColaboradorModal";
@@ -28,12 +28,12 @@ const CicloColaboradores: React.FC = () => {
   const { currentUser, hasClaim, roles } = useAuth();
   const [organograma, setOrganograma] = useState<Gerente | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editingColaboradorEmail, setEditingColaboradorEmail] = useState<string | null>(null);
+  const [editingColaborador, setEditingColaborador] = useState<Subordinado | null>(null);
 
   const isAdmin = roles.includes("Admin");
   const isGerenteCiclo = hasClaim("GerenteCiclo");
 
-  const reloadOrganograma = async () => {
+  const reloadOrganograma = useCallback(async () => {
     try {
       const res = await fetch("http://localhost:5000/ciclo/organograma", {
         credentials: "include",
@@ -42,25 +42,26 @@ const CicloColaboradores: React.FC = () => {
       setOrganograma(data[0] || null);
     } catch (err) {
       console.error("Erro ao buscar organograma:", err);
+      alert("Erro ao carregar organograma. Tente novamente.");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     reloadOrganograma();
-  }, []);
+  }, [reloadOrganograma]);
 
   const canEdit = (id: string) =>
     isAdmin || isGerenteCiclo || currentUser?.id === id;
 
-  if (loading) return <p>Carregando...</p>;
+  if (loading) return <p className="animate-pulse text-gray-500">Carregando colaboradores...</p>;
   if (!organograma) return <p>Nenhum gerente ciclo encontrado.</p>;
 
   return (
     <div className="tree-container">
       <div className="tree-root-wrapper">
-        <div className="tree-root">
+        <div className="tree-root animate-slideUpFade">
           <ColaboradorCard
             id={organograma.id}
             nome={organograma.nome}
@@ -69,15 +70,19 @@ const CicloColaboradores: React.FC = () => {
             tags={organograma.tags}
             historico={organograma.historico}
             canEdit={canEdit(organograma.id)}
-            onEdit={() => setEditingColaboradorEmail(organograma.email)}
+            onEdit={() => setEditingColaborador(organograma)}
           />
         </div>
         <div className="tree-root-line"></div>
       </div>
 
       <div className="tree-trunk">
-        {organograma.subordinados.map((sub) => (
-          <div key={sub.id} className="tree-branch">
+        {organograma.subordinados.map((sub, idx) => (
+          <div
+            key={sub.id}
+            className="tree-branch animate-slideUpFade"
+            style={{ animationDelay: `${(idx + 1) * 0.1}s` }}
+          >
             <div className="tree-branch-line"></div>
             <ColaboradorCard
               id={sub.id}
@@ -87,18 +92,21 @@ const CicloColaboradores: React.FC = () => {
               tags={sub.tags}
               historico={sub.historico}
               canEdit={canEdit(sub.id)}
-              onEdit={() => setEditingColaboradorEmail(sub.email)}
+              onEdit={() => setEditingColaborador(sub)}
             />
           </div>
         ))}
       </div>
 
-      {editingColaboradorEmail && (
+      {editingColaborador && (
         <CicloColaboradorModal
-          colaboradorEmail={editingColaboradorEmail}
-          onClose={() => setEditingColaboradorEmail(null)}
+          key={editingColaborador.email}
+          colaboradorId={editingColaborador.id}
+          colaboradorNome={editingColaborador.nome}
+          colaboradorEmail={editingColaborador.email}
+          onClose={() => setEditingColaborador(null)}
           canEdit={
-            isAdmin || isGerenteCiclo || currentUser?.email === editingColaboradorEmail
+            isAdmin || isGerenteCiclo || currentUser?.id === editingColaborador.id
           }
           onUpdate={reloadOrganograma}
         />

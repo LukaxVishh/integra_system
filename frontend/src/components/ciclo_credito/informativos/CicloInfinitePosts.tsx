@@ -10,6 +10,7 @@ interface PostData {
   content: string;
   mediaPath?: string | null;
   createdAt: string;
+  authorPhotoUrl?: string | null;
 }
 
 const SkeletonPost = () => (

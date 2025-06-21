@@ -8,6 +8,7 @@ interface UserInfo {
   cargo: string;
   ua: string;
   claims: string[];
+  photoUrl?: string;
 }
 
 interface AuthContextProps {

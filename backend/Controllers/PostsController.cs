@@ -111,31 +111,23 @@ namespace backend.Controllers
                 .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
 
             if (colaborador == null)
-            {
                 return Forbid();
-            }
 
             var userCC = colaborador.Centro_de_Custo;
-
             var roles = await _userManager.GetRolesAsync(user);
             var isAdmin = roles.Contains("Admin", StringComparer.OrdinalIgnoreCase);
             var isCA = roles.Any(r => r.Contains("CA", StringComparison.OrdinalIgnoreCase));
             var isUA = roles.Any(r => r.Contains("UA", StringComparison.OrdinalIgnoreCase));
 
-            // Se não for Admin, CA ou UA => Proibido
             if (!isAdmin && !isCA && !isUA)
-            {
                 return Forbid("Tipo de usuário não identificado como Admin, CA ou UA.");
-            }
 
-            // Base query
             var query = _context.Posts
                 .Include(p => p.Reactions)
                 .Include(p => p.Comments)
                 .OrderByDescending(p => p.Id)
                 .AsQueryable();
 
-            // Se não for Admin, aplica filtro de visibilidade e centro de custo
             if (!isAdmin)
             {
                 query = query.Where(p =>
@@ -162,7 +154,7 @@ namespace backend.Controllers
 
             var totalPosts = await query.CountAsync();
 
-            var posts = await query
+            var postsRaw = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(p => new
@@ -173,30 +165,73 @@ namespace backend.Controllers
                     p.Content,
                     p.MediaPath,
                     p.CreatedAt,
+
+                    // Foto do autor do post
+                    AuthorPhotoUrl = (
+                        from u in _context.Users
+                        join c in _context.Colaboradores on u.Email.ToLower() equals c.Email.ToLower()
+                        where u.Id == p.AuthorId
+                        select c.PhotoUrl
+                    ).FirstOrDefault(),
+
+                    // Supervisor do autor
                     AuthorSupervisorId = (
                         from u in _context.Users
                         join c in _context.Colaboradores on u.Email.ToLower() equals c.Email.ToLower()
                         where u.Id == p.AuthorId
                         select c.SupervisorId
                     ).FirstOrDefault(),
-                    Reactions = p.Reactions
-                        .GroupBy(r => r.Type)
-                        .Select(g => new
-                        {
-                            Type = g.Key,
-                            Count = g.Count(),
-                            Users = g.Select(r => r.UserName).ToList()
-                        }),
+
+                    // Reações "flat" — cada item com foto
+                    FlatReactions = p.Reactions
+                        .Select(r => new {
+                            r.Type,
+                            r.UserName,
+                            PhotoUrl = _context.Colaboradores
+                                .Where(c => c.Nome == r.UserName)
+                                .Select(c => c.PhotoUrl)
+                                .FirstOrDefault()
+                        })
+                        .ToList(),
+
+                    // Comentários com foto
                     Comments = p.Comments
                         .OrderBy(c => c.CreatedAt)
-                        .Select(c => new
-                        {
+                        .Select(c => new {
                             c.UserName,
                             c.Text,
-                            CreatedAt = c.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                            CreatedAt = c.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                            PhotoUrl = _context.Colaboradores
+                                .Where(colab => colab.Nome == c.UserName)
+                                .Select(colab => colab.PhotoUrl)
+                                .FirstOrDefault()
                         })
+                        .ToList()
                 })
                 .ToListAsync();
+
+            // Agrupa em memória
+            var posts = postsRaw.Select(p => new {
+                p.Id,
+                p.AuthorName,
+                p.AuthorCargo,
+                p.Content,
+                p.MediaPath,
+                p.CreatedAt,
+                p.AuthorPhotoUrl,
+                p.AuthorSupervisorId,
+
+                Reactions = p.FlatReactions
+                    .GroupBy(r => r.Type)
+                    .Select(g => new {
+                        Type = g.Key,
+                        Count = g.Count(),
+                        Users = g.Select(u => new { u.UserName, u.PhotoUrl }).ToList()
+                    })
+                    .ToList(),
+
+                p.Comments
+            }).ToList();
 
             return Ok(new
             {
@@ -204,6 +239,87 @@ namespace backend.Controllers
                 Page = page,
                 PageSize = pageSize,
                 Posts = posts
+            });
+        }
+
+
+        // GET /posts/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPost(int id)
+        {
+            var post = await _context.Posts
+                .Where(p => p.Id == id)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.AuthorName,
+                    p.AuthorCargo,
+                    p.Content,
+                    p.MediaPath,
+                    p.CreatedAt,
+                    AuthorPhotoUrl = (
+                        from u in _context.Users
+                        join c in _context.Colaboradores on u.Email.ToLower() equals c.Email.ToLower()
+                        where u.Id == p.AuthorId
+                        select c.PhotoUrl
+                    ).FirstOrDefault(),
+                    AuthorSupervisorId = (
+                        from u in _context.Users
+                        join c in _context.Colaboradores on u.Email.ToLower() equals c.Email.ToLower()
+                        where u.Id == p.AuthorId
+                        select c.SupervisorId
+                    ).FirstOrDefault(),
+
+                    // Pega tudo flat
+                    FlatReactions = p.Reactions
+                        .Select(r => new {
+                            r.Type,
+                            r.UserName,
+                            PhotoUrl = _context.Colaboradores
+                                .Where(c => c.Nome == r.UserName)
+                                .Select(c => c.PhotoUrl)
+                                .FirstOrDefault()
+                        })
+                        .ToList(),
+
+                    Comments = p.Comments
+                        .OrderBy(c => c.CreatedAt)
+                        .Select(c => new {
+                            c.UserName,
+                            c.Text,
+                            CreatedAt = c.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                            PhotoUrl = _context.Colaboradores
+                                .Where(colab => colab.Nome == c.UserName)
+                                .Select(colab => colab.PhotoUrl)
+                                .FirstOrDefault()
+                        })
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (post == null) return NotFound();
+
+            // Agrupa em memória
+            var reactionsGrouped = post.FlatReactions
+                .GroupBy(r => r.Type)
+                .Select(g => new {
+                    Type = g.Key,
+                    Count = g.Count(),
+                    Users = g.Select(u => new { u.UserName, u.PhotoUrl }).ToList()
+                })
+                .ToList();
+
+            return Ok(new {
+                post.Id,
+                post.AuthorName,
+                post.AuthorCargo,
+                post.Content,
+                post.MediaPath,
+                post.CreatedAt,
+                post.AuthorPhotoUrl,
+                post.AuthorSupervisorId,
+                Reactions = reactionsGrouped,
+                post.Comments
             });
         }
 
@@ -218,75 +334,80 @@ namespace backend.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            var colaborador = await _context.Colaboradores.FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
-            var userName = colaborador?.Nome ?? user.UserName;
+            // ✅ OBRIGA a ter Colaborador correspondente
+            var colaborador = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
 
-            var existingReaction = await _context.Reactions.FirstOrDefaultAsync(r => r.PostId == id && r.UserName == userName && r.Type == type);
+            if (colaborador == null)
+                return Forbid("Colaborador não encontrado. Não é possível reagir.");
+
+            var userName = colaborador.Nome; // ✅ Use apenas o Nome real, SEM fallback!
+
+            // Verifica se já existe essa reação
+            var existingReaction = await _context.Reactions
+                .FirstOrDefaultAsync(r => r.PostId == id && r.UserName == userName && r.Type == type);
 
             if (existingReaction != null)
             {
                 _context.Reactions.Remove(existingReaction);
-                await _context.SaveChangesAsync();
-                return Ok(new { action = "removed", type });
+            }
+            else
+            {
+                // Remove outras reações desse usuário neste post
+                var otherReactions = await _context.Reactions
+                    .Where(r => r.PostId == id && r.UserName == userName && r.Type != type)
+                    .ToListAsync();
+
+                if (otherReactions.Any())
+                    _context.Reactions.RemoveRange(otherReactions);
+
+                _context.Reactions.Add(new Reaction
+                {
+                    PostId = id,
+                    Type = type,
+                    UserName = userName // ✅ sempre Nome do Colaborador
+                });
             }
 
-            // Se quiser permitir só uma reação por usuário, pode limpar as outras
-            var otherReactions = await _context.Reactions
-                .Where(r => r.PostId == id && r.UserName == userName && r.Type != type)
-                .ToListAsync();
-
-            if (otherReactions.Any())
-                _context.Reactions.RemoveRange(otherReactions);
-
-            _context.Reactions.Add(new Reaction { PostId = id, Type = type, UserName = userName });
             await _context.SaveChangesAsync();
 
-            return Ok(new { action = "added", type });
-        }
-
-        // Rota: GET /posts/{id}
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetPost(int id)
-        {
-            var post = await _context.Posts
-                .Include(p => p.Reactions)
-                .Include(p => p.Comments)
-                .Where(p => p.Id == id)
-                .Select(p => new
+            // ✅ Pega todos os reactions do post, com foto
+            var allReactions = await _context.Reactions
+                .Where(r => r.PostId == id)
+                .Select(r => new
                 {
-                    p.Id,
-                    p.AuthorName,
-                    p.AuthorCargo,
-                    p.Content,
-                    p.MediaPath,
-                    p.CreatedAt,
-                    AuthorSupervisorId = _context.Colaboradores
-                        .Where(c => c.Nome == p.AuthorName)
-                        .Select(c => c.SupervisorId)
-                        .FirstOrDefault(),
-
-                    Reactions = p.Reactions
-                        .GroupBy(r => r.Type)
-                        .Select(g => new
-                        {
-                            Type = g.Key,
-                            Count = g.Count(),
-                            Users = g.Select(r => r.UserName).ToList()
-                        }),
-                    Comments = p.Comments
-                        .OrderBy(c => c.CreatedAt)
-                        .Select(c => new
-                        {
-                            c.UserName,
-                            c.Text,
-                            CreatedAt = c.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")
-                        })
+                    r.Type,
+                    r.UserName,
+                    PhotoUrl = _context.Colaboradores
+                        .Where(c => c.Nome == r.UserName)
+                        .Select(c => c.PhotoUrl)
+                        .FirstOrDefault()
                 })
-                .FirstOrDefaultAsync();
+                .ToListAsync();
 
-            if (post == null) return NotFound();
-            return Ok(post);
+            // ✅ Agrupa em memória
+            var grouped = allReactions
+                .GroupBy(r => r.Type)
+                .Select(g => new
+                {
+                    Type = g.Key,
+                    Count = g.Count(),
+                    Users = g.Select(r => new
+                    {
+                        r.UserName,
+                        r.PhotoUrl
+                    }).ToList()
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                action = existingReaction != null ? "removed" : "added",
+                type,
+                reactions = grouped
+            });
         }
+
 
         // Permite comentar — qualquer logado
         [HttpPost("{id}/comments")]
@@ -298,7 +419,8 @@ namespace backend.Controllers
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Unauthorized();
 
-            var colaborador = await _context.Colaboradores.FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
+            var colaborador = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
             var userName = colaborador?.Nome ?? user.UserName;
 
             var comment = new Comment
@@ -312,7 +434,14 @@ namespace backend.Controllers
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
-            return Ok(new { comment.Id, comment.UserName, comment.Text, comment.CreatedAt });
+            return Ok(new
+            {
+                comment.Id,
+                comment.UserName,
+                comment.Text,
+                comment.CreatedAt,
+                colaborador?.PhotoUrl
+            });
         }
 
         // Atualiza conteúdo do post
@@ -372,6 +501,16 @@ namespace backend.Controllers
             if (post.AuthorName != currentUserName && !canManageAll && !isSupervisor)
             {
                 return Forbid();
+            }
+
+            // SE EXISTIR MÍDIA, DELETA DO DISCO ANTES DE REMOVER DO BANCO
+            if (!string.IsNullOrEmpty(post.MediaPath))
+            {
+                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", post.MediaPath);
+                if (System.IO.File.Exists(filePath))
+                {
+                    System.IO.File.Delete(filePath);
+                }
             }
 
             // Remove reações e comentários

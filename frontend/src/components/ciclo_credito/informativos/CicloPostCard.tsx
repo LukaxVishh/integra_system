@@ -24,6 +24,7 @@ interface CicloPostCardProps {
   content: string;
   mediaPath?: string | null;
   createdAt: string;
+  authorPhotoUrl?: string | null;
   authorSupervisorId?: string | null;
 }
 
@@ -46,6 +47,7 @@ const CicloPostCard: React.FC<CicloPostCardProps> = ({
   mediaPath,
   createdAt,
   authorSupervisorId,
+  authorPhotoUrl,
 }) => {
   const { currentUser, roles } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -138,8 +140,16 @@ const CicloPostCard: React.FC<CicloPostCardProps> = ({
     <div className="bg-white border border-[#E6F4EA] rounded-2xl shadow p-5 space-y-4 relative w-full max-w-3xl mx-auto flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-[#0F9D58] rounded-full flex items-center justify-center text-white font-bold">
-          {authorName[0].toUpperCase()}
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-[#E6F4EA] flex items-center justify-center text-[#0F9D58] font-bold">
+          {authorPhotoUrl ? (
+            <img
+              src={`http://localhost:5000/${authorPhotoUrl}`}
+              alt={authorName}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            authorName[0].toUpperCase()
+          )}
         </div>
         <div>
           <p className="font-semibold text-gray-800">

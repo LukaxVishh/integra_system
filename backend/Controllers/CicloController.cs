@@ -97,24 +97,40 @@ namespace backend.Controllers
         public async Task<IActionResult> GetCicloPosts([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
         {
             var user = await _userManager.GetUserAsync(User);
-            var colaborador = await _context.Colaboradores.FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
+            var colaborador = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == user.Email.ToLower());
+
             if (colaborador == null) return Forbid();
 
             var query = _context.CicloPosts
                 .OrderByDescending(p => p.Id)
-                .AsQueryable();
+                .Select(p => new {
+                    p.Id,
+                    p.AuthorName,
+                    p.AuthorCargo,
+                    p.Content,
+                    p.MediaPath,
+                    p.CreatedAt,
+                    AuthorPhotoUrl = _context.Colaboradores
+                        .Where(c => c.Nome == p.AuthorName)
+                        .Select(c => c.PhotoUrl)
+                        .FirstOrDefault()
+                });
 
             var total = await query.CountAsync();
-            var posts = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+            var posts = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            return Ok(new
-            {
+            return Ok(new {
                 Total = total,
                 Page = page,
                 PageSize = pageSize,
                 Posts = posts
             });
         }
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateCicloPost(int id, [FromBody] PostUpdateDto dto)
@@ -172,6 +188,16 @@ namespace backend.Controllers
             if (post.AuthorName != currentUserName && !canManageAll && !isSupervisor && !canDelete)
             {
                 return Forbid();
+            }
+
+            // REMOVE MEDIA DO DISCO
+            if (!string.IsNullOrEmpty(post.MediaPath))
+            {
+                var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", post.MediaPath);
+                if (System.IO.File.Exists(fullPath))
+                {
+                    System.IO.File.Delete(fullPath);
+                }
             }
 
             _context.CicloPosts.Remove(post);
@@ -468,8 +494,6 @@ namespace backend.Controllers
         [HttpGet("colaboradores/atividades/{email}")]
         public async Task<IActionResult> ListarAtividadesPorColaborador(string email)
         {
-            // Qualquer um pode ver o histórico de atividades de qualquer colaborador?
-            // Se não quiser, limite aqui!
 
             var atividades = await _context.CicloColaboradorAtividades
                 .Where(a => a.ColaboradorEmail.ToLower() == email.ToLower())

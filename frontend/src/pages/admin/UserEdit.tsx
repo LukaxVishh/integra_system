@@ -40,14 +40,16 @@ const UserEdit: React.FC = () => {
   const [supervisorId, setSupervisorId] = useState<string | null>(null);
   const [claims, setClaims] = useState<string[]>([]);
   const [userClaims, setUserClaims] = useState<string[]>([]);
-
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
+
   const [rolesDropdownOpen, setRolesDropdownOpen] = useState(false);
   const [claimsDropdownOpen, setClaimsDropdownOpen] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [supervisorsDropdownOpen, setSupervisorsDropdownOpen] = useState(false);
 
   const rolesDropdownRef = useRef<HTMLDivElement>(null);
   const claimsDropdownRef = useRef<HTMLDivElement>(null);
+  const supervisorsDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -56,6 +58,9 @@ const UserEdit: React.FC = () => {
       }
       if (claimsDropdownRef.current && !claimsDropdownRef.current.contains(event.target as Node)) {
         setClaimsDropdownOpen(false);
+      }
+      if (supervisorsDropdownRef.current && !supervisorsDropdownRef.current.contains(event.target as Node)) {
+        setSupervisorsDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -96,11 +101,7 @@ const UserEdit: React.FC = () => {
   }, [id]);
 
   const handleRoleChange = (roleName: string) => {
-    setRoles(prev =>
-      prev.map(r =>
-        r.name === roleName ? { ...r, assigned: !r.assigned } : r
-      )
-    );
+    setRoles(prev => prev.map(r => r.name === roleName ? { ...r, assigned: !r.assigned } : r));
   };
 
   const handleClaimChange = async (claimType: string) => {
@@ -133,25 +134,20 @@ const UserEdit: React.FC = () => {
 
   const handleSyncClaims = async () => {
     try {
-      // 1️⃣ Atualiza roles antes de sincronizar claims
       const selectedRoles = roles.filter(r => r.assigned).map(r => r.name);
-      const rolesRes = await fetch(`http://localhost:5000/users/${id}/roles`, {
+      await fetch(`http://localhost:5000/users/${id}/roles`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(selectedRoles)
       });
 
-      if (!rolesRes.ok) throw new Error("Erro ao salvar roles antes de sincronizar claims.");
-
-      // 2️⃣ Agora sincroniza claims com base nas roles persistidas
       const syncRes = await fetch(`http://localhost:5000/users/${id}/sync-claims`, {
         method: "POST",
         credentials: "include"
       });
 
       if (syncRes.ok) {
-        // Atualiza claims na tela após sync
         const refreshed = await fetch(`http://localhost:5000/users/${id}/roles`, { credentials: "include" });
         const refreshedData: UserRolesResponse = await refreshed.json();
         setUserClaims(refreshedData.claims || []);
@@ -168,7 +164,6 @@ const UserEdit: React.FC = () => {
 
   const handleSave = async () => {
     const selectedRoles = roles.filter(r => r.assigned).map(r => r.name);
-
     const payload: any = {
       nome,
       email,
@@ -208,130 +203,161 @@ const UserEdit: React.FC = () => {
   if (loading) return <p className="p-4">Carregando...</p>;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#F9FAFB] flex flex-col">
       <Navbar />
-      <div className="flex-grow flex items-center justify-center p-6 mt-16">
-        <div className="bg-white shadow-lg rounded-lg p-8 w-full max-w-4xl relative">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">Editar Usuário</h2>
-          <div className="grid grid-cols-3 gap-4">
+      <main className="flex-grow flex justify-center items-start px-4 pt-24 pb-10">
+        <div className="bg-white shadow-xl rounded-2xl border border-[#E6F4EA] p-8 w-full max-w-4xl animate-fadeIn">
+          <div className="flex items-center gap-3 mb-6">
+            <span dangerouslySetInnerHTML={{ __html: `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="#0F9D58" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user-round-cog-icon lucide-user-round-cog"><path d="m14.305 19.53.923-.382"/><path d="m15.228 16.852-.923-.383"/><path d="m16.852 15.228-.383-.923"/><path d="m16.852 20.772-.383.924"/><path d="M2 21a8 8 0 0 1 10.434-7.62"/><path d="m20.772 16.852.924-.383"/><path d="m20.772 19.148.924.383"/><circle cx="10" cy="8" r="5"/><circle cx="18" cy="18" r="3"/></svg>` }} />
+            <h1 className="text-2xl font-bold text-[#0F9D58]">Perfil do usuário</h1>
+          </div>
 
-            {message && (
-              <div className="absolute left-1/2 -top-20 transform -translate-x-1/2">
-                <button
-                  className="border-2 border-green-700 bg-green-100 text-green-700 font-bold px-6 py-2 rounded shadow"
-                  disabled
-                >
-                  {message}
-                </button>
-              </div>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Field label="LDAP" value={userName} readOnly />
+            <Field label="Nome" value={nome} onChange={setNome} />
+            <Field label="Cargo" value={cargo} onChange={setCargo} />
+            <Field label="UA" value={ua} onChange={setUa} type="number" />
+            <Field label="Email" value={email} onChange={setEmail} type="email" />
 
-            <div>
-              <label className="block font-semibold">Ldap</label>
-              <input type="text" value={userName} readOnly
-                className="w-full bg-gray-100 border border-gray-300 rounded p-2" />
-            </div>
-            <div>
-              <label className="block font-semibold">Nome</label>
-              <input type="text" value={nome} onChange={e => setNome(e.target.value)}
-                className="w-full border border-gray-300 rounded p-2" />
-            </div>
-            <div>
-              <label className="block font-semibold">Cargo</label>
-              <input type="text" value={cargo} onChange={e => setCargo(e.target.value)}
-                className="w-full border border-gray-300 rounded p-2" />
-            </div>
-            <div>
-              <label className="block font-semibold">UA</label>
-              <input type="number" value={ua} onChange={e => setUa(e.target.value)}
-                className="w-full border border-gray-300 rounded p-2" />
-            </div>
-            <div>
-              <label className="block font-semibold">Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded p-2" />
-            </div>
+            <MultiSelectDropdown
+              label="Acessos (Roles)"
+              items={roles}
+              onToggle={handleRoleChange}
+              isOpen={rolesDropdownOpen}
+              setIsOpen={setRolesDropdownOpen}
+              ref={rolesDropdownRef}
+              placeholder="Selecionar Acessos"
+            />
 
-            <div>
-              <label className="block font-semibold">Acessos (Roles)</label>
-              <div ref={rolesDropdownRef} className="relative">
-                <button type="button"
-                  onClick={() => setRolesDropdownOpen(!rolesDropdownOpen)}
-                  className="w-full border border-gray-300 rounded p-2 bg-gray-50 hover:bg-gray-100">
-                  Selecionar Acessos
-                </button>
-                {rolesDropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow max-h-48 overflow-auto">
-                    {roles.map(role => (
-                      <label key={role.name} className="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer">
-                        <input type="checkbox" checked={role.assigned} onChange={() => handleRoleChange(role.name)} />
-                        <span>{role.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-semibold">Claims Manuais</label>
-              <div ref={claimsDropdownRef} className="relative">
-                <button type="button"
-                  onClick={() => setClaimsDropdownOpen(!claimsDropdownOpen)}
-                  className="w-full border border-gray-300 rounded p-2 bg-gray-50 hover:bg-gray-100">
-                  Conceder/Revogar Claims
-                </button>
-                {claimsDropdownOpen && (
-                  <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow max-h-48 overflow-auto">
-                    {claims.map(claim => (
-                      <label key={claim} className="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer">
-                        <input type="checkbox" checked={userClaims.includes(claim)}
-                          onChange={() => handleClaimChange(claim)} />
-                        <span>{claim}</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <MultiSelectDropdown
+              label="Claims Manuais"
+              items={claims.map(c => ({ name: c, assigned: userClaims.includes(c) }))}
+              onToggle={handleClaimChange}
+              isOpen={claimsDropdownOpen}
+              setIsOpen={setClaimsDropdownOpen}
+              ref={claimsDropdownRef}
+              placeholder="Conceder/Revogar Claims"
+              position="top"
+            />
 
             {isLowLevel && (
-              <div>
-                <label className="block font-semibold">Gerente Responsável</label>
-                <select value={supervisorId || ""} onChange={e => setSupervisorId(e.target.value)}
-                  className="w-full border border-gray-300 rounded p-2">
-                  <option value="">Selecione um gerente</option>
-                  {supervisors.map(s => (
-                    <option key={s.id} value={s.id}>{s.nome}</option>
-                  ))}
-                </select>
-              </div>
+              <MultiSelectDropdown
+                label="Gerente Responsável"
+                items={supervisors.map(s => ({ name: s.nome, assigned: s.id === supervisorId }))}
+                onToggle={(name: string) => {
+                  const supervisor = supervisors.find(s => s.nome === name);
+                  if (supervisor) setSupervisorId(supervisor.id);
+                  setSupervisorsDropdownOpen(false);
+                }}
+                isOpen={supervisorsDropdownOpen}
+                setIsOpen={setSupervisorsDropdownOpen}
+                ref={supervisorsDropdownRef}
+                placeholder="Selecionar Gerente"
+                singleSelect
+                position="top"
+              />
             )}
-
           </div>
 
-          <div className="flex justify-between space-x-4 mt-6">
-            <button onClick={handleSyncClaims}
-              className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-6 py-2 rounded">
-              Sincronizar Claims Padrão
-            </button>
-            <div className="flex gap-4">
-              <button onClick={() => navigate("/admin/manager")}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold px-4 py-2 rounded">
-                Cancelar
-              </button>
-              <button onClick={handleSave}
-                className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded">
-                Salvar
-              </button>
+          {message && (
+            <div className="mt-6 px-4 py-3 rounded-lg bg-yellow-100 border border-yellow-400 text-yellow-800 animate-slideFade">
+              {message}
             </div>
-          </div>
-        </div>
-      </div>
+          )}
 
+          <div className="flex justify-end gap-4 mt-8">
+            <button
+              onClick={handleSyncClaims}
+              className="px-5 py-2 rounded-full font-bold text-[#0F9D58] border border-[#0F9D58] hover:bg-[#E6F4EA] transition"
+            >
+              Sincronizar Claims
+            </button>
+            <button
+              onClick={() => navigate("/admin/manager")}
+              className="px-5 py-2 rounded-full font-bold bg-gray-300 hover:bg-gray-400 text-gray-800 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-5 py-2 rounded-full font-bold bg-[#0F9D58] hover:bg-[#0C7A43] text-white transition"
+            >
+              Salvar
+            </button>
+          </div>
+
+          <style>{`
+            .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+            .animate-slideFade { animation: slideFade 0.3s ease-out; }
+            @keyframes fadeIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+            @keyframes slideFade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+          `}</style>
+        </div>
+      </main>
       <Footer />
     </div>
   );
 };
+
+const Field = ({ label, value, onChange, readOnly = false, type = "text" }: any) => (
+  <div>
+    <label className="block font-semibold text-[#0F9D58] mb-1">{label}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={e => onChange?.(e.target.value)}
+      readOnly={readOnly}
+      className={`w-full border border-[#E6F4EA] rounded px-4 py-2 ${readOnly ? "bg-gray-100" : "bg-white"}`}
+    />
+  </div>
+);
+
+const MultiSelectDropdown = React.forwardRef(({ label, items, onToggle, isOpen, setIsOpen, placeholder, position, singleSelect }: any, ref: any) => (
+  <div>
+    <label className="block font-semibold text-[#0F9D58] mb-1">{label}</label>
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full border border-[#E6F4EA] rounded-full px-4 py-2 bg-white shadow-sm hover:bg-[#F1F8F5] flex justify-between items-center transition"
+      >
+        {items.filter((i: any) => i.assigned).length > 0
+          ? `${items.filter((i: any) => i.assigned).length} selecionado(s)`
+          : placeholder}
+        <svg className={`w-4 h-4 ml-2 transition-transform ${isOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      {isOpen && (
+        <div className={`absolute z-20 ${position === "top" ? "bottom-full mb-2" : "mt-2"} w-full bg-white border border-[#E6F4EA] rounded-xl shadow-lg max-h-60 overflow-auto animate-slideFade`}>
+          {items.map((item: any) => (
+            <label
+              key={item.name}
+              className="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-[#F1F8F5] transition"
+            >
+              <span>{item.name}</span>
+              {singleSelect ? (
+                <input
+                  type="radio"
+                  name={label}
+                  checked={item.assigned}
+                  onChange={() => onToggle(item.name)}
+                  className="accent-[#0F9D58] w-4 h-4"
+                />
+              ) : (
+                <input
+                  type="checkbox"
+                  checked={item.assigned}
+                  onChange={() => onToggle(item.name)}
+                  className="accent-[#0F9D58] w-4 h-4"
+                />
+              )}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+));
 
 export default UserEdit;

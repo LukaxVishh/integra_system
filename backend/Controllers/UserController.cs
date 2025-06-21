@@ -295,6 +295,7 @@ namespace backend.Controllers
                 nome = colaborador.Nome,
                 cargo = colaborador.Cargo,
                 ua = colaborador.Centro_de_Custo.ToString(),
+                photoUrl = colaborador.PhotoUrl,
                 claims = claims.Select(c => c.Type).ToList(),
                 roles,
             });
@@ -374,6 +375,17 @@ namespace backend.Controllers
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
+            // DELETE DA FOTO ANTIGA, SE EXISTIR
+            if (!string.IsNullOrEmpty(colaborador.PhotoUrl))
+            {
+                var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", colaborador.PhotoUrl.Replace("/", Path.DirectorySeparatorChar.ToString()));
+                if (System.IO.File.Exists(oldPath))
+                {
+                    System.IO.File.Delete(oldPath);
+                }
+            }
+
+            // SALVA NOVA FOTO
             var fileName = $"{Guid.NewGuid()}.jpg";
             var uploadPath = Path.Combine(uploadsFolder, fileName);
 
@@ -392,5 +404,112 @@ namespace backend.Controllers
 
             return Ok(new { photoUrl = colaborador.PhotoUrl });
         }
+
+
+        [HttpDelete("{id}/photo")]
+        [Authorize]
+        public async Task<IActionResult> DeleteUserPhoto(string id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var canManageAll = userRoles.Contains("Admin");
+            var isGerenteCA = userRoles.Contains("Gerente CA");
+            var isGerenteUA = userRoles.Contains("Gerente UA");
+            var isSelf = user.Id == id;
+
+            if (!canManageAll && !isGerenteCA && !isGerenteUA && !isSelf)
+                return Forbid();
+
+            var targetUser = await _userManager.FindByIdAsync(id);
+            if (targetUser == null)
+                return NotFound("Usuário não encontrado.");
+
+            var colaborador = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == targetUser.Email.ToLower());
+
+            if (colaborador == null)
+                return NotFound("Colaborador não encontrado para o usuário.");
+
+            if (!string.IsNullOrEmpty(colaborador.PhotoUrl))
+            {
+                var photoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", colaborador.PhotoUrl);
+                if (System.IO.File.Exists(photoPath))
+                {
+                    System.IO.File.Delete(photoPath);
+                }
+            }
+
+            colaborador.PhotoUrl = null;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Foto removida com sucesso!" });
+        }
+
+        [HttpPut("{id}/photo")]
+        public async Task<IActionResult> UploadOrReplaceUserPhoto(string id, [FromForm] UploadPhotoDto dto)
+        {
+            if (dto.File == null || dto.File.Length == 0)
+                return BadRequest("Nenhum arquivo enviado.");
+
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            var userRoles = await _userManager.GetRolesAsync(user);
+            var canManageAll = userRoles.Contains("Admin");
+            var isGerenteCA = userRoles.Contains("Gerente CA");
+            var isGerenteUA = userRoles.Contains("Gerente UA");
+            var isSelf = user.Id == id;
+
+            if (!canManageAll && !isGerenteCA && !isGerenteUA && !isSelf)
+                return Forbid();
+
+            var targetUser = await _userManager.FindByIdAsync(id);
+            if (targetUser == null)
+                return NotFound("Usuário não encontrado.");
+
+            var colaborador = await _context.Colaboradores
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == targetUser.Email.ToLower());
+
+            if (colaborador == null)
+                return NotFound("Colaborador não encontrado para o usuário.");
+
+            // 1) Apaga a foto antiga se existir
+            if (!string.IsNullOrEmpty(colaborador.PhotoUrl))
+            {
+                // Ajuste conforme sua estrutura:
+                var oldPath = Path.Combine(Directory.GetCurrentDirectory(), colaborador.PhotoUrl.Replace("/", Path.DirectorySeparatorChar.ToString()));
+                if (System.IO.File.Exists(oldPath))
+                {
+                    System.IO.File.Delete(oldPath);
+                }
+            }
+
+            // 2) Salva a nova foto redimensionada
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}.jpg";
+            var uploadPath = Path.Combine(uploadsFolder, fileName);
+
+            using (var image = SixLabors.ImageSharp.Image.Load(dto.File.OpenReadStream()))
+            {
+                image.Mutate(x => x.Resize(new SixLabors.ImageSharp.Processing.ResizeOptions
+                {
+                    Mode = SixLabors.ImageSharp.Processing.ResizeMode.Crop,
+                    Size = new SixLabors.ImageSharp.Size(400, 400)
+                }));
+                image.SaveAsJpeg(uploadPath, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 80 });
+            }
+
+            // 3) Atualiza o caminho salvo no banco (ajuste para seu padrão de URL pública!)
+            colaborador.PhotoUrl = $"uploads/{fileName}";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { photoUrl = colaborador.PhotoUrl });
+        }
+
     }
 }
