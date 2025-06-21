@@ -1,4 +1,4 @@
-import { BookOpenIcon, ClipboardIcon, UsersIcon, Bars3Icon } from "@heroicons/react/24/outline";
+import { BookOpenIcon, ClipboardIcon, UsersIcon, BanknotesIcon } from "@heroicons/react/24/outline";
 
 interface CicloSidebarProps {
   activeTab: "informativos" | "orientador" | "colaboradores";
@@ -9,7 +9,7 @@ interface CicloSidebarProps {
 const CicloSidebar: React.FC<CicloSidebarProps> = ({ activeTab, setActiveTab, setSelectedButtonId }) => (
   <aside className="inline-block bg-white rounded-2xl shadow p-4 border border-[#E6F4EA] w-72">
     <div className="flex items-center gap-2 mb-4">
-      <Bars3Icon className="w-5 h-5 text-[#0F9D58]" />
+      <BanknotesIcon className="w-5 h-5 text-[#0F9D58]" />
       <h2 className="text-lg font-bold text-[#0F9D58]">Ciclo de Crédito</h2>
     </div>
     <ul className="space-y-2">

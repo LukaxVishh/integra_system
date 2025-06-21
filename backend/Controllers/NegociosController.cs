@@ -217,7 +217,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("orientador/buttons")]
-        public async Task<IActionResult> CreateButton([FromBody] NegociosOrientadorButtonDto dto)
+        public async Task<IActionResult> CreateButton([FromBody] OrientadorButtonDto dto)
         {
             if (!User.HasClaim("NeCreateOri", "true") && !User.HasClaim("CanManageAll", "true"))
                 return Forbid();
@@ -240,7 +240,7 @@ namespace backend.Controllers
         }
 
         [HttpPut("orientador/buttons/{id}")]
-        public async Task<IActionResult> UpdateButton(int id, [FromBody] NegociosOrientadorButtonUpdateDto dto)
+        public async Task<IActionResult> UpdateButton(int id, [FromBody] OrientadorButtonUpdateDto dto)
         {
             if (!User.HasClaim("NeUpdateOri", "true") && !User.HasClaim("CanManageAll", "true"))
                 return Forbid();
@@ -307,7 +307,7 @@ namespace backend.Controllers
         }
 
         [HttpPost("orientador/buttons/{buttonId}/table")]
-        public async Task<IActionResult> SaveOrUpdateTable(int buttonId, [FromBody] NegociosOrientadorTableDto dto)
+        public async Task<IActionResult> SaveOrUpdateTable(int buttonId, [FromBody] OrientadorTableDto dto)
         {
             if (!User.HasClaim("NeCreateOri", "true") &&
                 !User.HasClaim("NeUpdateOri", "true") &&

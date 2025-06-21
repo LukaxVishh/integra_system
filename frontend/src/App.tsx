@@ -11,6 +11,12 @@ import AccessDenied from "./pages/acessos/NoAccess";
 import FirstAccsses from "./pages/acessos/FirstAccess";
 import CicloCredito from "./pages/ciclo/CicloCrédito";
 import Negocios from "./pages/negocios/negocios"
+import ControlesInternos from "./pages/controles_internos/ControlesInternos"
+import Operacoes from "./pages/operacoes/operacoes"
+import Processos from "./pages/processos/Processos"
+import ServicosCompartilhados from "./pages/servicos_compartilhados/ServicosCompartilhados"
+import Cooperativismo from "./pages/cooperativismo/Cooperativismo"
+import PessoasCultura from "./pages/pessoas_cultura/PessoasCultura"
 
 const AppContent: React.FC = () => {
   const { isLoading } = useAuth();
@@ -50,6 +56,54 @@ const AppContent: React.FC = () => {
         element={
           <ProtectedRoute>
             <Negocios />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/controles-internos"
+        element={
+          <ProtectedRoute>
+            <ControlesInternos />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/operacoes"
+        element={
+          <ProtectedRoute>
+            <Operacoes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/processos"
+        element={
+          <ProtectedRoute>
+            <Processos />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/servicos-compartilhados"
+        element={
+          <ProtectedRoute>
+            <ServicosCompartilhados />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cooperativismo"
+        element={
+          <ProtectedRoute>
+            <Cooperativismo />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pessoas-cultura"
+        element={
+          <ProtectedRoute>
+            <PessoasCultura />
           </ProtectedRoute>
         }
       />

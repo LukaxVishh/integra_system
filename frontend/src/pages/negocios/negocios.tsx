@@ -7,7 +7,7 @@ import OrientadorTableEditor from "../../components/negocios/orientador/Orientad
 import NegociosSidebar from "../../components/negocios/NegociosSidebar";
 import NegociosColaboradores from "../../components/negocios/colaboradores/NegociosColaboradores"
 
-const NegociosCredito: React.FC = () => {
+const Negocios: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"informativos" | "orientador" | "colaboradores">("informativos");
   const [selectedButtonId, setSelectedButtonId] = useState<number | null>(null);
 
@@ -60,4 +60,4 @@ const NegociosCredito: React.FC = () => {
   );
 };
 
-export default NegociosCredito;
+export default Negocios;

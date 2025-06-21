@@ -415,6 +415,246 @@ namespace backend.Migrations
                     b.ToTable("Comments");
                 });
 
+            modelBuilder.Entity("backend.Entities.ControlesInternosColaboradorAtividade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColaboradorEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Cor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DataFim")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataInicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NomeTag")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ControlesInternosColaboradorAtividades");
+                });
+
+            modelBuilder.Entity("backend.Entities.ControlesInternosOrientadorButton", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Bold")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalLink")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TextColor")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ControlesInternosOrientadorButtons");
+                });
+
+            modelBuilder.Entity("backend.Entities.ControlesInternosOrientadorTable", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ButtonId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataJson")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ButtonId");
+
+                    b.ToTable("ControlesInternosOrientadorTables");
+                });
+
+            modelBuilder.Entity("backend.Entities.ControlesInternosPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorCargo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MediaPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Visibility")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ControlesInternosPosts");
+                });
+
+            modelBuilder.Entity("backend.Entities.CooperativismoColaboradorAtividade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColaboradorEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Cor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DataFim")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataInicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NomeTag")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CooperativismoColaboradorAtividades");
+                });
+
+            modelBuilder.Entity("backend.Entities.CooperativismoOrientadorButton", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Bold")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalLink")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TextColor")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CooperativismoOrientadorButtons");
+                });
+
+            modelBuilder.Entity("backend.Entities.CooperativismoOrientadorTable", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ButtonId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataJson")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ButtonId");
+
+                    b.ToTable("CooperativismoOrientadorTables");
+                });
+
+            modelBuilder.Entity("backend.Entities.CooperativismoPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorCargo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MediaPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Visibility")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CooperativismoPosts");
+                });
+
             modelBuilder.Entity("backend.Entities.NegociosColaboradorAtividade", b =>
                 {
                     b.Property<int>("Id")
@@ -535,6 +775,246 @@ namespace backend.Migrations
                     b.ToTable("NegociosPosts");
                 });
 
+            modelBuilder.Entity("backend.Entities.OperacoesColaboradorAtividade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColaboradorEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Cor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DataFim")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataInicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NomeTag")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OperacoesColaboradorAtividades");
+                });
+
+            modelBuilder.Entity("backend.Entities.OperacoesOrientadorButton", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Bold")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalLink")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TextColor")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OperacoesOrientadorButtons");
+                });
+
+            modelBuilder.Entity("backend.Entities.OperacoesOrientadorTable", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ButtonId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataJson")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ButtonId");
+
+                    b.ToTable("OperacoesOrientadorTables");
+                });
+
+            modelBuilder.Entity("backend.Entities.OperacoesPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorCargo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MediaPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Visibility")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OperacoesPosts");
+                });
+
+            modelBuilder.Entity("backend.Entities.PessoasCulturaColaboradorAtividade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColaboradorEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Cor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DataFim")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataInicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NomeTag")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PessoasCulturaColaboradorAtividades");
+                });
+
+            modelBuilder.Entity("backend.Entities.PessoasCulturaOrientadorButton", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Bold")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalLink")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TextColor")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PessoasCulturaOrientadorButtons");
+                });
+
+            modelBuilder.Entity("backend.Entities.PessoasCulturaOrientadorTable", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ButtonId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataJson")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ButtonId");
+
+                    b.ToTable("PessoasCulturaOrientadorTables");
+                });
+
+            modelBuilder.Entity("backend.Entities.PessoasCulturaPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorCargo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MediaPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Visibility")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PessoasCulturaPosts");
+                });
+
             modelBuilder.Entity("backend.Entities.Post", b =>
                 {
                     b.Property<int>("Id")
@@ -569,6 +1049,126 @@ namespace backend.Migrations
                     b.ToTable("Posts");
                 });
 
+            modelBuilder.Entity("backend.Entities.ProcessosColaboradorAtividade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColaboradorEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Cor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DataFim")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataInicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NomeTag")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProcessosColaboradorAtividades");
+                });
+
+            modelBuilder.Entity("backend.Entities.ProcessosOrientadorButton", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Bold")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalLink")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TextColor")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProcessosOrientadorButtons");
+                });
+
+            modelBuilder.Entity("backend.Entities.ProcessosOrientadorTable", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ButtonId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataJson")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ButtonId");
+
+                    b.ToTable("ProcessosOrientadorTables");
+                });
+
+            modelBuilder.Entity("backend.Entities.ProcessosPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorCargo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MediaPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Visibility")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProcessosPosts");
+                });
+
             modelBuilder.Entity("backend.Entities.Reaction", b =>
                 {
                     b.Property<int>("Id")
@@ -591,6 +1191,126 @@ namespace backend.Migrations
                     b.HasIndex("PostId");
 
                     b.ToTable("Reactions");
+                });
+
+            modelBuilder.Entity("backend.Entities.ServicosCompartilhadosColaboradorAtividade", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ColaboradorEmail")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Cor")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DataFim")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DataInicio")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Descricao")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NomeTag")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ServicosCompartilhadosColaboradorAtividades");
+                });
+
+            modelBuilder.Entity("backend.Entities.ServicosCompartilhadosOrientadorButton", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Bold")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Color")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ExternalLink")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text");
+
+                    b.Property<string>("TextColor")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ServicosCompartilhadosOrientadorButtons");
+                });
+
+            modelBuilder.Entity("backend.Entities.ServicosCompartilhadosOrientadorTable", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ButtonId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DataJson")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ButtonId");
+
+                    b.ToTable("ServicosCompartilhadosOrientadorTables");
+                });
+
+            modelBuilder.Entity("backend.Entities.ServicosCompartilhadosPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorCargo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MediaPath")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Visibility")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ServicosCompartilhadosPosts");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -666,7 +1386,62 @@ namespace backend.Migrations
                     b.Navigation("Post");
                 });
 
+            modelBuilder.Entity("backend.Entities.ControlesInternosOrientadorTable", b =>
+                {
+                    b.HasOne("backend.Entities.CicloOrientadorButton", "Button")
+                        .WithMany()
+                        .HasForeignKey("ButtonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Button");
+                });
+
+            modelBuilder.Entity("backend.Entities.CooperativismoOrientadorTable", b =>
+                {
+                    b.HasOne("backend.Entities.CicloOrientadorButton", "Button")
+                        .WithMany()
+                        .HasForeignKey("ButtonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Button");
+                });
+
             modelBuilder.Entity("backend.Entities.NegociosOrientadorTable", b =>
+                {
+                    b.HasOne("backend.Entities.CicloOrientadorButton", "Button")
+                        .WithMany()
+                        .HasForeignKey("ButtonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Button");
+                });
+
+            modelBuilder.Entity("backend.Entities.OperacoesOrientadorTable", b =>
+                {
+                    b.HasOne("backend.Entities.CicloOrientadorButton", "Button")
+                        .WithMany()
+                        .HasForeignKey("ButtonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Button");
+                });
+
+            modelBuilder.Entity("backend.Entities.PessoasCulturaOrientadorTable", b =>
+                {
+                    b.HasOne("backend.Entities.CicloOrientadorButton", "Button")
+                        .WithMany()
+                        .HasForeignKey("ButtonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Button");
+                });
+
+            modelBuilder.Entity("backend.Entities.ProcessosOrientadorTable", b =>
                 {
                     b.HasOne("backend.Entities.CicloOrientadorButton", "Button")
                         .WithMany()
@@ -686,6 +1461,17 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("backend.Entities.ServicosCompartilhadosOrientadorTable", b =>
+                {
+                    b.HasOne("backend.Entities.CicloOrientadorButton", "Button")
+                        .WithMany()
+                        .HasForeignKey("ButtonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Button");
                 });
 
             modelBuilder.Entity("backend.Entities.Post", b =>

@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { BriefcaseIcon, ArrowTrendingUpIcon, CheckCircleIcon, Bars3Icon } from "@heroicons/react/24/outline";
+import { BriefcaseIcon, ArrowTrendingUpIcon, Bars3Icon, ClipboardDocumentCheckIcon, BanknotesIcon, IdentificationIcon } from "@heroicons/react/24/outline";
+import { HandshakeIcon, ShieldCheckIcon, UsersIcon } from "lucide-react";
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
@@ -16,17 +17,26 @@ const Sidebar: React.FC = () => {
             className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
             onClick={() => navigate("/ciclo-credito")}
           >
-            <BriefcaseIcon className="w-5 h-5" />
+            <BanknotesIcon className="w-5 h-5 text-[#0F9D58]" />
             Ciclo de Crédito
           </button>
         </li>
         <li>
           <button
             className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
-            onClick={() => console.log("Controles Internos")}
+            onClick={() => navigate("/controles-internos")}
           >
-            <CheckCircleIcon className="w-5 h-5" />
+            <ShieldCheckIcon className="w-5 h-5" />
             Controles Internos
+          </button>
+        </li>
+        <li>
+          <button
+            className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
+            onClick={() => navigate("/cooperativismo")}
+          >
+            <HandshakeIcon className="w-5 h-5 text-[#0F9D58]" />
+            Desenvolvimento do Cooperativismo
           </button>
         </li>
         <li>
@@ -41,27 +51,36 @@ const Sidebar: React.FC = () => {
         <li>
           <button
             className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
-            onClick={() => console.log("Operações Administrativas")}
+            onClick={() => navigate("/operacoes")}
           >
-            <CheckCircleIcon className="w-5 h-5" />
+            <BriefcaseIcon  className="w-5 h-5" />
             Operações Administrativas
           </button>
         </li>
         <li>
           <button
             className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
-            onClick={() => console.log("Processos de Qualidade")}
+            onClick={() => navigate("/pessoas-cultura")}
           >
-            <CheckCircleIcon className="w-5 h-5" />
+            <IdentificationIcon className="w-5 h-5 text-[#0F9D58]" />
+            Pessoas e Cultura
+          </button>
+        </li>
+        <li>
+          <button
+            className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
+            onClick={() => navigate("/processos")}
+          >
+            <ClipboardDocumentCheckIcon className="w-5 h-5 text-[#0F9D58]" />
             Processos de Qualidade
           </button>
         </li>
         <li>
           <button
             className="w-full flex items-center gap-2 px-4 py-2 text-left text-[#0F9D58] bg-[#E6F4EA] rounded-md hover:bg-[#D8F1E1] transition"
-            onClick={() => console.log("Serviços Compartilhados")}
+            onClick={() => navigate("/servicos-compartilhados")}
           >
-            <CheckCircleIcon className="w-5 h-5" />
+            <UsersIcon className="w-5 h-5 text-[#0F9D58]" />
             Serviços Compartilhados
           </button>
         </li>
