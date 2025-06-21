@@ -375,6 +375,17 @@ namespace backend.Controllers
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
+            // DELETE DA FOTO ANTIGA, SE EXISTIR
+            if (!string.IsNullOrEmpty(colaborador.PhotoUrl))
+            {
+                var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", colaborador.PhotoUrl.Replace("/", Path.DirectorySeparatorChar.ToString()));
+                if (System.IO.File.Exists(oldPath))
+                {
+                    System.IO.File.Delete(oldPath);
+                }
+            }
+
+            // SALVA NOVA FOTO
             var fileName = $"{Guid.NewGuid()}.jpg";
             var uploadPath = Path.Combine(uploadsFolder, fileName);
 
@@ -393,6 +404,7 @@ namespace backend.Controllers
 
             return Ok(new { photoUrl = colaborador.PhotoUrl });
         }
+
 
         [HttpDelete("{id}/photo")]
         [Authorize]
@@ -463,18 +475,19 @@ namespace backend.Controllers
             if (colaborador == null)
                 return NotFound("Colaborador não encontrado para o usuário.");
 
-            // ⚡ Apaga foto antiga, se houver
+            // 1) Apaga a foto antiga se existir
             if (!string.IsNullOrEmpty(colaborador.PhotoUrl))
             {
-                var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", colaborador.PhotoUrl);
+                // Ajuste conforme sua estrutura:
+                var oldPath = Path.Combine(Directory.GetCurrentDirectory(), colaborador.PhotoUrl.Replace("/", Path.DirectorySeparatorChar.ToString()));
                 if (System.IO.File.Exists(oldPath))
                 {
                     System.IO.File.Delete(oldPath);
                 }
             }
 
-            // ⚡ Salva nova foto redimensionada
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            // 2) Salva a nova foto redimensionada
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
@@ -491,10 +504,12 @@ namespace backend.Controllers
                 image.SaveAsJpeg(uploadPath, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 80 });
             }
 
+            // 3) Atualiza o caminho salvo no banco (ajuste para seu padrão de URL pública!)
             colaborador.PhotoUrl = $"uploads/{fileName}";
             await _context.SaveChangesAsync();
 
             return Ok(new { photoUrl = colaborador.PhotoUrl });
         }
+
     }
 }

@@ -23,12 +23,23 @@ interface PostProps {
   authorCargo: string;
   content: string;
   mediaPath?: string | null;
-  reactions: { type: string; count: number; users?: string[] }[];
-  comments: { userName: string; text: string; createdAt: string }[];
+  reactions: {
+    type: string;
+    count: number;
+    users?: { userName: string; photoUrl?: string | null }[];
+  }[];
+  comments: {
+    userName: string;
+    text: string;
+    createdAt: string;
+    photoUrl?: string | null;
+  }[];
   authorSupervisorId?: string | null;
+  authorPhotoUrl?: string | null;
   onDelete?: (id: number) => void;
   createdAt: string;
 }
+
 
 function formatRelativeTime(dateIso: string) {
   if (!dateIso) return "Agora mesmo";
@@ -61,6 +72,7 @@ const Post: React.FC<PostProps> = ({
   reactions,
   comments: initialComments,
   authorSupervisorId,
+  authorPhotoUrl,
   onDelete,
   createdAt,
 }) => {
@@ -156,16 +168,14 @@ const Post: React.FC<PostProps> = ({
       });
 
       if (response.ok) {
-        const newPost = await fetch(`http://localhost:5000/posts/${id}`, {
-          credentials: "include",
-        }).then((res) => res.json());
-
-        setLocalReactions(newPost.reactions);
+        const data = await response.json();
+        setLocalReactions(data.reactions); // 👈 Já vem pronto, não precisa novo GET
       }
     } catch (err) {
       console.error("Erro ao reagir:", err);
     }
   };
+
 
   const handleAddComment = async () => {
     if (comment.trim() === "" || !currentUser) return;
@@ -238,9 +248,14 @@ const Post: React.FC<PostProps> = ({
 
       {/* HEADER */}
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-[#0F9D58] rounded-full flex items-center justify-center text-white font-bold">
-          {authorName[0].toUpperCase()}
+        <div className="w-10 h-10 rounded-full overflow-hidden  bg-[#E6F4EA] flex items-center justify-center text-[#0F9D58] font-bold">
+          {authorPhotoUrl ? (
+            <img src={`http://localhost:5000/${authorPhotoUrl}`} alt={authorName} className="w-full h-full object-cover" />
+          ) : (
+            authorName[0].toUpperCase()
+          )}
         </div>
+
         <div>
           <p className="font-semibold text-gray-800">
             {getFirstAndSecondName(authorName)}{" "}
@@ -365,10 +380,15 @@ const Post: React.FC<PostProps> = ({
                 {localReactions.find(r => r.type === "like")?.users?.length ? (
                   localReactions.find(r => r.type === "like")?.users?.map((user, idx) => (
                     <li key={idx} className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-[#0F9D58] rounded-full flex items-center justify-center text-white text-xs">
-                        {user[0].toUpperCase()}
+                      <div className="w-6 h-6 rounded-full overflow-hidden  bg-[#E6F4EA] flex items-center justify-center text-[#0F9D58] text-xs font-bold">
+                        {user.photoUrl ? (
+                          <img src={`http://localhost:5000/${user.photoUrl}`} alt={user.userName} className="w-full h-full object-cover" />
+                        ) : (
+                          user.userName[0].toUpperCase()
+                        )}
                       </div>
-                      <span>{getFirstAndSecondName(user)}</span>
+
+                      <span>{getFirstAndSecondName(user.userName)}</span>
                     </li>
                   ))
                 ) : (
@@ -403,10 +423,14 @@ const Post: React.FC<PostProps> = ({
                 {localReactions.find(r => r.type === "love")?.users?.length ? (
                   localReactions.find(r => r.type === "love")?.users?.map((user, idx) => (
                     <li key={idx} className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-[#0F9D58] rounded-full flex items-center justify-center text-white text-xs">
-                        {user[0].toUpperCase()}
+                      <div className="w-6 h-6 rounded-full overflow-hidden  bg-[#E6F4EA] flex items-center justify-center text-[#0F9D58] text-xs font-bold">
+                        {user.photoUrl ? (
+                          <img src={`http://localhost:5000/${user.photoUrl}`} alt={user.userName} className="w-full h-full object-cover" />
+                        ) : (
+                          user.userName[0].toUpperCase()
+                        )}
                       </div>
-                      <span>{getFirstAndSecondName(user)}</span>
+                      <span>{getFirstAndSecondName(user.userName)}</span>
                     </li>
                   ))
                 ) : (
@@ -448,10 +472,14 @@ const Post: React.FC<PostProps> = ({
                 {localReactions.find(r => r.type === "laugh")?.users?.length ? (
                   localReactions.find(r => r.type === "laugh")?.users?.map((user, idx) => (
                     <li key={idx} className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-[#0F9D58] rounded-full flex items-center justify-center text-white text-xs">
-                        {user[0].toUpperCase()}
+                      <div className="w-6 h-6 rounded-full overflow-hidden  bg-[#E6F4EA] flex items-center justify-center text-[#0F9D58] text-xs font-bold">
+                        {user.photoUrl ? (
+                          <img src={`http://localhost:5000/${user.photoUrl}`} alt={user.userName} className="w-full h-full object-cover" />
+                        ) : (
+                          user.userName[0].toUpperCase()
+                        )}
                       </div>
-                      <span>{getFirstAndSecondName(user)}</span>
+                      <span>{getFirstAndSecondName(user.userName)}</span>
                     </li>
                   ))
                 ) : (
@@ -485,15 +513,19 @@ const Post: React.FC<PostProps> = ({
           <h4 className="text-sm font-semibold text-gray-700">Comentários</h4>
           {comments.map((c, idx) => (
             <div key={idx} className="flex items-start gap-2">
-              <div className="w-8 h-8 bg-[#0F9D58] rounded-full flex items-center justify-center text-white text-xs font-bold">
-                {c.userName[0].toUpperCase()}
+              <div className="w-8 h-8 rounded-full overflow-hidden  bg-[#E6F4EA] flex items-center justify-center text-[#0F9D58] text-xs font-bold">
+                {c.photoUrl ? (
+                  <img src={`http://localhost:5000/${c.photoUrl}`} alt={c.userName} className="w-full h-full object-cover" />
+                ) : (
+                  c.userName[0].toUpperCase()
+                )}
               </div>
               <div className="text-sm bg-[#F1F8F5] rounded-xl px-4 py-2">
                 <span className="font-semibold">
                   {getFirstAndSecondName(c.userName)}:
                 </span>{" "}
                 {c.text}
-                <span className="ml-2 text-xs text-gray-400">{formatRelativeTime(c.createdAt)}</span>
+                {/* <span className="ml-2 text-xs text-gray-400">{formatRelativeTime(c.createdAt)}</span> */}
               </div>
             </div>
           ))}

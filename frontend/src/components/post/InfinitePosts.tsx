@@ -8,11 +8,16 @@ interface PostData {
   authorCargo: string;
   content: string;
   mediaPath?: string | null;
-  reactions: { type: string; count: number; users?: string[] }[];
+  reactions: {
+    type: string;
+    count: number;
+    users?: { userName: string; photoUrl?: string | null }[];
+  }[];
   comments: { userName: string; text: string; createdAt: string }[];
   authorSupervisorId?: string | null;
   createdAt: string;
 }
+
 
 const SkeletonPost = () => (
   <div className="bg-white border border-[#E6F4EA] rounded-2xl shadow p-5 space-y-4 animate-pulse">
