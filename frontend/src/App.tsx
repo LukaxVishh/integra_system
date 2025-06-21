@@ -10,6 +10,7 @@ import UserEdit from "./pages/admin/UserEdit";
 import AccessDenied from "./pages/acessos/NoAccess";
 import FirstAccsses from "./pages/acessos/FirstAccess";
 import CicloCredito from "./pages/ciclo/CicloCrédito";
+import Negocios from "./pages/negocios/negocios"
 
 const AppContent: React.FC = () => {
   const { isLoading } = useAuth();
@@ -41,6 +42,14 @@ const AppContent: React.FC = () => {
         element={
           <ProtectedRoute>
             <CicloCredito />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/negocios"
+        element={
+          <ProtectedRoute>
+            <Negocios />
           </ProtectedRoute>
         }
       />
