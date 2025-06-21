@@ -23,6 +23,10 @@ namespace backend.Context
         public DbSet<CicloOrientadorButton> CicloOrientadorButtons { get; set; }
         public DbSet<CicloOrientadorTable> CicloOrientadorTables { get; set; }
         public DbSet<CicloColaboradorAtividade> CicloColaboradorAtividades { get; set; }
+        public DbSet<NegociosPost> NegociosPosts { get; set; }
+        public DbSet<NegociosOrientadorButton> NegociosOrientadorButtons { get; set; }
+        public DbSet<NegociosOrientadorTable> NegociosOrientadorTables { get; set; }
+        public DbSet<NegociosColaboradorAtividade> NegociosColaboradorAtividades { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
